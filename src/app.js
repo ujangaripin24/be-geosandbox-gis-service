@@ -33,7 +33,7 @@ app.listen(process.env.APP_PORT, async () => {
     try {
         console.log("Connected!")
     } catch (error) {
-        console.error("❌ Unable to start server:");
+        console.error("Unable to start server:");
         console.error(error.message);
         process.exit(1);
     }
