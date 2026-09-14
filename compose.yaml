@@ -18,7 +18,7 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:17
+    image: postgis/postgis:17-master
     container_name: gis_service_db
     restart: always
     user: postgres
