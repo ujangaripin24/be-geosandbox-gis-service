@@ -13,36 +13,7 @@ services:
       - .env
     ports:
       - "3620:3620"
-    depends_on:
-      db:
-        condition: service_healthy
 
-  db:
-    image: postgis/postgis:17-master
-    container_name: gis_service_db
-    restart: always
-    user: postgres
-    secrets:
-      - db-password
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=db_gis_geosandbox
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-    ports:
-      - "5433:5433"
-    expose:
-      - "5433"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d db_gis_geosandbox" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
-volumes:
-  db-data:
-
-secrets:
-  db-password:
-    file: db/password.txt
+networks:
+    global-network-geosandbox:
+      external: true
