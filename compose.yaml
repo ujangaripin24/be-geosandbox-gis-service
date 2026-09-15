@@ -13,7 +13,9 @@ services:
       - .env
     ports:
       - "3620:3620"
+    networks:
+      - global-network-geosandbox
 
 networks:
-    global-network-geosandbox:
-      external: true
+  global-network-geosandbox:
+    external: true
