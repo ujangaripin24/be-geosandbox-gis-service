@@ -6,6 +6,7 @@ const helmet = require("helmet");
 const createError = require("http-errors");
 const messageBroker = require("./config/message-broker.config");
 const database = require("./config/database.config");
+const {listenUserUpdatedQueue } = require("./pkg/message-broker/user.subscriber");
 const fs = require("fs");
 const path = require("path");
 
@@ -35,6 +36,7 @@ app.listen(process.env.APP_PORT, async () => {
   try {
     await database.authenticate();
     await messageBroker.connectRabbitMQ();
+    await listenUserUpdatedQueue();
   } catch (error) {
     console.error("Unable to start server:");
     console.error(error.message);

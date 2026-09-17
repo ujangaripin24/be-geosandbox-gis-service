@@ -14,12 +14,26 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   DetailUsers.init({
-    uuid: DataTypes.STRING,
-    username: DataTypes.STRING,
-    email: DataTypes.STRING
+    uuid: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+      allowNull: false
+    },
+    username: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true
+    },
   }, {
     sequelize,
     modelName: 'DetailUsers',
+    tableName: 'tbl_users',
+    timestamps: true
   });
   return DetailUsers;
 };
