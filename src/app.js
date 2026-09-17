@@ -4,6 +4,8 @@ const logger = require("morgan");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const createError = require("http-errors");
+const messageBroker = require("./config/message-broker.config");
+const database = require("./config/database.config");
 const fs = require("fs");
 const path = require("path");
 
@@ -31,7 +33,8 @@ app.get("/", (req, res) => {
 app.listen(process.env.APP_PORT, async () => {
   console.log(`[SERVICE-GIS] Server berjalan di port ${process.env.APP_PORT}`);
   try {
-    console.log("Connected!");
+    await database.authenticate();
+    await messageBroker.connectRabbitMQ();
   } catch (error) {
     console.error("Unable to start server:");
     console.error(error.message);
