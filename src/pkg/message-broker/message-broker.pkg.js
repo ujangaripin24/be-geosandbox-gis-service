@@ -37,13 +37,16 @@ const reciverMessageData = async (queueName, callback) => {
       throw new Error("RabbitMQ channel is not initialized or connected yet.");
     }
 
-    await channel.assertQueue(queueName, { durable: true });
-    channel.consume(queueName, (msg) => {
-      if (msg) {
-        callback(msg);
-      }
-    });
-    console.log(`[RabbitMQ] Waiting for messages on queue '${queueName}'`);
+    const queueNames = Array.isArray(queueName) ? queueName : [queueName];
+    for (const targetQueue of queueNames) {
+      await channel.assertQueue(targetQueue, { durable: true });
+      channel.consume(targetQueue, (msg) => {
+        if (msg) {
+          callback(msg);
+        }
+      });
+      console.log(`[RabbitMQ] Waiting for messages on queue '${targetQueue}'`);
+    }
     return true;
   } catch (error) {
     console.error(

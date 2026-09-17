@@ -5,7 +5,7 @@ const { DetailUsers } = require("../../models");
 let consumerRegistered = false;
 
 const consumeUserUpdatedQueue = async () => {
-  await reciverMessageData("gis_user_update", async (msg) => {
+  await reciverMessageData(["gis_user_activated", "gis_user_update"], async (msg) => {
     if (!msg) return;
     try {
       const payload = JSON.parse(msg.content.toString());
