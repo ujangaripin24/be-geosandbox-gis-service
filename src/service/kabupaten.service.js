@@ -34,6 +34,40 @@ const importKabupaten = async (document, { replace = false } = {}) => {
   }
 };
 
+const getAllKabupaten = async ({ page = 1, size = 10, search = "" }) => {
+  const limit = parseInt(size);
+  const offset = (page - 1) * limit;
+  const where = search
+    ? {
+        [Op.or]: [{ nama_kabupaten: { [Op.like]: `%${search}%` } }],
+      }
+    : {};
+
+  const { rows, count } = await TblGeoWilayah.findAndCountAll({
+    attributes: ["object_id", "nama_kabupaten", "geom"],
+    where,
+    limit,
+    offset,
+  });
+
+  const totalPages = Math.ceil(count / limit);
+  return {
+    data: rows,
+    size: limit,
+    page: parseInt(page),
+    totalPages,
+  };
+};
+
+const getKabupatenByCode = async (code) => {
+  const kabupaten = await TblGeoWilayah.findOne({
+    where: { object_id: code },
+  });
+  return kabupaten;
+};
+
 module.exports = {
   importKabupaten,
+  getAllKabupaten,
+  getKabupatenByCode,
 };
