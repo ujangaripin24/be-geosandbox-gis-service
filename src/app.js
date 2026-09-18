@@ -9,6 +9,7 @@ const database = require("./config/database.config");
 const {listenUserUpdatedQueue } = require("./pkg/message-broker/user.subscriber");
 const fs = require("fs");
 const path = require("path");
+const provinsiRouter = require("./routes/provinsi.routes");
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(logger("dev"));
 // app.use(logger("combined", { stream: accessLogStream }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/v1", provinsiRouter);
 
 app.get("/", (req, res) => {
   res.status(200).json({

@@ -13,13 +13,28 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  GeoProvinsi.init({
-    kode_provinsi: DataTypes.STRING,
-    nama_provinsi: DataTypes.STRING,
-    geom: DataTypes.STRING
-  }, {
-    sequelize,
-    modelName: 'GeoProvinsi',
-  });
+  GeoProvinsi.init(
+    {
+      kode_provinsi: {
+        type: DataTypes.STRING(2),
+        primaryKey: true,
+        allowNull: false,
+      },
+      nama_provinsi: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+      },
+      geom: {
+        type: DataTypes.GEOMETRY("MULTIPOLYGON", 4326),
+        allowNull: false,
+      },
+    },
+    {
+      sequelize,
+      modelName: "TblGeoProvinsi",
+      tableName: "tbl_geo_provinsi",
+      timestamps: true,
+    },
+  );
   return GeoProvinsi;
 };

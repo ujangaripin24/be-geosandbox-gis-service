@@ -1,34 +1,41 @@
-'use strict';
+"use strict";
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('GeoProvinsis', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER
-      },
+    await queryInterface.sequelize.query(
+      "CREATE EXTENSION IF NOT EXISTS postgis;",
+    );
+
+    await queryInterface.createTable("tbl_geo_provinsi", {
       kode_provinsi: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING(2),
+        allowNull: false,
+        primaryKey: true,
       },
       nama_provinsi: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING(100),
+        allowNull: false,
       },
       geom: {
-        type: Sequelize.STRING
+        type: Sequelize.GEOMETRY("MULTIPOLYGON", 4326),
+        allowNull: false,
       },
       createdAt: {
+        type: Sequelize.DATE,
         allowNull: false,
-        type: Sequelize.DATE
       },
       updatedAt: {
+        type: Sequelize.DATE,
         allowNull: false,
-        type: Sequelize.DATE
-      }
+      },
+    });
+
+    await queryInterface.addIndex("tbl_geo_provinsi", ["geom"], {
+      name: "tbl_geo_provinsi_geom_gist",
+      using: "gist",
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('GeoProvinsis');
-  }
+    await queryInterface.dropTable("tbl_geo_provinsi");
+  },
 };
