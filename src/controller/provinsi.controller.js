@@ -3,6 +3,7 @@ const {
   importProvinsi,
   getAllProvinsi,
   getProvinsiByCode,
+  getProvinsiByName,
 } = require("../service/provinsi.service");
 
 const importProvinsiController = async (req, res) => {
@@ -59,8 +60,8 @@ const getProvinsiByCodeController = async (req, res) => {
 
 const getProvinsiByNameController = async (req, res) => {
   try {
-    const { search } = req.query;
-    const result = await getProvinsiByName({ search });
+    const { page, size, search } = req.query;
+    const result = await getProvinsiByName({ page, size, search });
     return res.status(200).json({
       message: "Data provinsi berhasil diambil",
       data: result,
