@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const { sequelize, TblGeoWilayah } = require("../models");
 const {
   validateFeatureCollection,
+  toGeoJSONFeature,
 } = require("../validation/kabupaten.validation");
 
 const importKabupaten = async (document, { replace = false } = {}) => {
@@ -44,7 +45,14 @@ const getAllKabupaten = async ({ page = 1, size = 10, search = "" }) => {
     : {};
 
   const { rows, count } = await TblGeoWilayah.findAndCountAll({
-    attributes: ["object_id", "nama_kabupaten", "geom"],
+    attributes: [
+      "object_id",
+      "kode_provinsi",
+      "kode_kabupaten",
+      "nama_kabupaten",
+      "nama_provinsi",
+      "geom",
+    ],
     where,
     limit,
     offset,
@@ -52,10 +60,12 @@ const getAllKabupaten = async ({ page = 1, size = 10, search = "" }) => {
 
   const totalPages = Math.ceil(count / limit);
   return {
-    data: rows,
+    type: "FeatureCollection",
+    features: rows.map(toGeoJSONFeature),
     size: limit,
     page: parseInt(page),
     totalPages,
+    totalData: count,
   };
 };
 
@@ -63,7 +73,7 @@ const getKabupatenByCode = async (code) => {
   const kabupaten = await TblGeoWilayah.findOne({
     where: { object_id: code },
   });
-  return kabupaten;
+  return kabupaten ? toGeoJSONFeature(kabupaten) : null;
 };
 
 module.exports = {
