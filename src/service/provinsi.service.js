@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const { TblGeoProvinsi, sequelize } = require("../models");
 const {
   validateFeatureCollection,
+  toGeoJSONFeature,
 } = require("../validation/provinsi.validation");
 
 const importProvinsi = async (document, { replace = false } = {}) => {
@@ -54,7 +55,8 @@ const getAllProvinsi = async ({ page = 1, size = 10, search = "" }) => {
 
   const totalPages = Math.ceil(count / limit);
   return {
-    data: rows,
+    type: "FeatureCollection",
+    features: rows.map(toGeoJSONFeature),
     size: limit,
     page: parseInt(page),
     totalPages,

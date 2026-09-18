@@ -96,6 +96,7 @@ const toGeoJSONFeature = (row) => {
 	properties,
   };
 };
+
 module.exports = {
 	normalizeGeometry,
 	validateFeatureCollection,

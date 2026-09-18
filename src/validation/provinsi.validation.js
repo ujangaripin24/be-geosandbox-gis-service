@@ -45,7 +45,19 @@ const validateFeatureCollection = (document) => {
 	});
 };
 
+const toGeoJSONFeature = (row) => {
+  const values = row.toJSON ? row.toJSON() : row;
+  const { geom, ...properties } = values;
+
+  return {
+	type: "Feature",
+	geometry: geom,
+	properties,
+  };
+};
+
 module.exports = {
 	normalizeGeometry,
 	validateFeatureCollection,
+	toGeoJSONFeature
 };
