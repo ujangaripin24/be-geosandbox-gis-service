@@ -12,10 +12,29 @@ const AddPlaceService = async (data) => {
     uuid_user,
   } = data;
 
-  const lon = parseFloat(longitude);
-  const lat = parseFloat(latitude);
+  let lon = parseFloat(longitude);
+  let lat = parseFloat(latitude);
 
-  const [wilayahRows] = await sequelize.query(
+  let [existingPlace] = await sequelize.query(
+    `SELECT uuid, name_place 
+     FROM tbl_geo_point_place 
+     WHERE ST_Equals(
+        geom,
+        ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)
+     ) 
+     LIMIT 1;`,
+    {
+      replacements: { lon, lat },
+    },
+  );
+
+  if (existingPlace && existingPlace.length > 0) {
+    throw new Error(
+      `Data tempat dengan nama '${existingPlace[0].name_place}' sudah ada`,
+    );
+  }
+
+  let [wilayahRows] = await sequelize.query(
     `SELECT 
         wilayah.kode_provinsi,
         wilayah.nama_provinsi,
@@ -39,7 +58,7 @@ const AddPlaceService = async (data) => {
     );
   }
 
-  const { kode_provinsi, nama_provinsi, nama_kabupaten, is_inside } =
+  let { kode_provinsi, nama_provinsi, nama_kabupaten, is_inside } =
     wilayahRows[0];
 
   if (!is_inside) {
@@ -48,7 +67,7 @@ const AddPlaceService = async (data) => {
     );
   }
 
-  const [insertedRows] = await sequelize.query(
+  let [insertedRows] = await sequelize.query(
     `INSERT INTO tbl_geo_point_place (
         uuid,
         name_place,
@@ -101,7 +120,7 @@ const AddPlaceService = async (data) => {
     },
   );
 
-  const placeData = insertedRows[0];
+  let placeData = insertedRows[0];
   if (placeData && typeof placeData.geom === "string") {
     placeData.geom = JSON.parse(placeData.geom);
   }
