@@ -15,6 +15,6 @@ const database = new Sequelize(
   },
 );
 
-console.log('Database connection string');
+console.log('Database: connection string');
 
 module.exports = database;

@@ -12,6 +12,7 @@ const path = require("path");
 const provinsiRouter = require("./routes/provinsi.routes");
 const kabupatenRouter = require("./routes/kabupaten.routes");
 const selectedAreaRouter = require("./routes/selected-area.routes");
+const rustfsClient = require("./config/storage-s3.config");
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.listen(process.env.APP_PORT, async () => {
   try {
     await database.authenticate();
     await messageBroker.connectRabbitMQ();
+    await rustfsClient.connectionStorageS3(); 
     await listenUserUpdatedQueue();
   } catch (error) {
     console.error("Unable to start server:");

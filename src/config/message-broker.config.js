@@ -27,7 +27,7 @@ const connectRabbitMQ = async () => {
         connection = nextConnection;
         channel = nextChannel;
 
-        console.log("RabbitMQ connected and channel created");
+        console.log("RabbitMQ: connected and channel created");
 
         nextConnection.on('error', (err) => {
             console.error("RabbitMQ connection error event triggered:", err.message);
