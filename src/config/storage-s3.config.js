@@ -14,7 +14,7 @@ async function connectionStorageS3() {
     await rustfsClient.send(new ListBucketsCommand({}));
     console.log("RustFS: Connected successfully!");
   } catch (error) {
-    console.error(`Reason: ${error.message}`);
+    console.error(`RustFS Error: ${error.message}`);
   }
 }
 
