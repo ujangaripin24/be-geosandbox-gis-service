@@ -1,9 +1,9 @@
 const { formatError } = require("../pkg/error-formatter.pkg");
 const {
-  getKecamatanByProvinsi,
+  getKabupatenByProvinsi,
 } = require("../service/selected-area.service");
 
-const getKecamatanByProvinsiController = async (req, res) => {
+const getKabupatenByProvinsiController = async (req, res) => {
   try {
     const { kode_provinsi: kodeProvinsi } = req.params;
 
@@ -14,9 +14,9 @@ const getKecamatanByProvinsiController = async (req, res) => {
       ));
     }
 
-    const data = await getKecamatanByProvinsi(kodeProvinsi);
+    const data = await getKabupatenByProvinsi(kodeProvinsi);
     return res.status(200).json({
-      message: "Data kecamatan berhasil diambil",
+      message: "Data kabupaten/kota berhasil diambil",
       data,
     });
   } catch (error) {
@@ -25,5 +25,5 @@ const getKecamatanByProvinsiController = async (req, res) => {
 };
 
 module.exports = {
-  getKecamatanByProvinsiController,
+  getKabupatenByProvinsiController,
 };
