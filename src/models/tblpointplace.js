@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "uuid_place",
         as: "images",
       });
+      TblPointPlace.belongsTo(models.DetailUsers, {
+        foreignKey: "uuid_user",
+        as: "user",
+      });
     }
   }
   TblPointPlace.init(
@@ -28,6 +32,26 @@ module.exports = (sequelize, DataTypes) => {
       },
       description: {
         type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      kode_provinsi: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+      },
+      nama_provinsi: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      kode_kabupaten: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      nama_kabupaten: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      uuid_user: {
+        type: DataTypes.UUID,
         allowNull: true,
       },
       geom: {
