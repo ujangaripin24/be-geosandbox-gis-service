@@ -12,6 +12,7 @@ const {listenUserUpdatedQueue } = require("./pkg/message-broker/user.subscriber"
 const provinsiRouter = require("./routes/provinsi.routes");
 const kabupatenRouter = require("./routes/kabupaten.routes");
 const selectedAreaRouter = require("./routes/selected-area.routes");
+const pointPlacesRouter = require("./routes/point-places.routes");
 const rustfsClient = require("./config/storage-s3.config");
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1", provinsiRouter);
 app.use("/api/v1", kabupatenRouter);
 app.use("/api/v1", selectedAreaRouter);
+app.use("/api/v1", pointPlacesRouter);
 
 app.get("/", (req, res) => {
   res.status(200).json({
