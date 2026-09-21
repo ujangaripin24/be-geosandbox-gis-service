@@ -1,6 +1,6 @@
 const { validationResult } = require("express-validator");
 const { formatError } = require("../pkg/error-formatter.pkg");
-const { AddPlaceService } = require("../service/point-places.service");
+const { AddPlaceService, GetAllPlaceService } = require("../service/point-places.service");
 
 const CreatePlaceController = async (req, res, next) => {
   const errors = validationResult(req);
@@ -35,6 +35,22 @@ const CreatePlaceController = async (req, res, next) => {
   }
 };
 
+const GetAllPlaceController = async (req, res, next) => {
+  try {
+    let { page, size, search } = req.query;
+    let placeData = await GetAllPlaceService({ page, size, search });
+
+    return res.status(200).json({
+      message: "Data tempat berhasil diambil",
+      data: placeData,
+    });
+  } catch (error) {
+    console.error("Error in GetAllPlaceController:", error.message);
+    return res.status(500).json(formatError(error.message, "server"));
+  }
+}
+
 module.exports = {
   CreatePlaceController,
+  GetAllPlaceController,
 };

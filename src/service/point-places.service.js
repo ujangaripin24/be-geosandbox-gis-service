@@ -1,12 +1,20 @@
-const { sequelize } = require("../models");
+const { Op } = require("sequelize");
+const { toGeoJSONFeature } = require("../validation/kabupaten.validation");
+const { sequelize, TblPointPlace } = require("../models");
 
 const AddPlaceService = async (data) => {
-  let { name_place, description, kode_kabupaten, longitude, latitude, uuid_user } = data;
+  let {
+    name_place,
+    description,
+    kode_kabupaten,
+    longitude,
+    latitude,
+    uuid_user,
+  } = data;
 
   const lon = parseFloat(longitude);
   const lat = parseFloat(latitude);
 
-  // 1. Validasi Spasial PostGIS: Cek apakah koordinat berada di dalam poligon wilayah
   const [wilayahRows] = await sequelize.query(
     `SELECT 
         wilayah.kode_provinsi,
@@ -22,22 +30,24 @@ const AddPlaceService = async (data) => {
      LIMIT 1;`,
     {
       replacements: { kode_kabupaten, lon, lat },
-    }
+    },
   );
 
   if (!wilayahRows || wilayahRows.length === 0) {
-    throw new Error(`Data wilayah dengan kode kabupaten '${kode_kabupaten}' tidak ditemukan`);
-  }
-
-  const { kode_provinsi, nama_provinsi, nama_kabupaten, is_inside } = wilayahRows[0];
-
-  if (!is_inside) {
     throw new Error(
-      `Titik koordinat (${lat}, ${lon}) tidak valid karena berada di luar wilayah administratif ${nama_kabupaten} (${nama_provinsi})`
+      `Data wilayah dengan kode kabupaten '${kode_kabupaten}' tidak ditemukan`,
     );
   }
 
-  // 2. Query PostGIS: Simpan ke tabel tbl_geo_point_place
+  const { kode_provinsi, nama_provinsi, nama_kabupaten, is_inside } =
+    wilayahRows[0];
+
+  if (!is_inside) {
+    throw new Error(
+      `Titik koordinat (${lat}, ${lon}) tidak valid karena berada di luar wilayah administratif ${nama_kabupaten} (${nama_provinsi})`,
+    );
+  }
+
   const [insertedRows] = await sequelize.query(
     `INSERT INTO tbl_geo_point_place (
         uuid,
@@ -88,7 +98,7 @@ const AddPlaceService = async (data) => {
         lon,
         lat,
       },
-    }
+    },
   );
 
   const placeData = insertedRows[0];
@@ -99,6 +109,46 @@ const AddPlaceService = async (data) => {
   return placeData;
 };
 
+const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
+  let limit = parseInt(size);
+  let offset = (page - 1) * limit;
+  let where = search
+    ? {
+        [Op.or]: [{ name_place: { [Op.like]: `%${search}%` } }],
+      }
+    : {};
+
+  let { rows, count } = await TblPointPlace.findAndCountAll({
+    attributes: [
+      "uuid",
+      "name_place",
+      "description",
+      "kode_provinsi",
+      "nama_provinsi",
+      "kode_kabupaten",
+      "nama_kabupaten",
+      "uuid_user",
+      "geom",
+      "createdAt",
+      "updatedAt",
+    ],
+    where,
+    limit,
+    offset,
+  });
+
+  let totalPages = Math.ceil(count / limit);
+  return {
+    type: "FeatureCollection",
+    features: rows.map(toGeoJSONFeature),
+    size: limit,
+    page: parseInt(page),
+    totalPages,
+    totalData: count,
+  };
+};
+
 module.exports = {
   AddPlaceService,
+  GetAllPlaceService,
 };
