@@ -167,7 +167,104 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
   };
 };
 
+const UpdatePlaceService = async (uuid, body) => {
+  let data = await TblPointPlace.findOne({
+    where: { uuid },
+  });
+  if (!data) {
+    throw new Error("Place Not Found");
+  }
+
+  let kode_kabupaten = body.kode_kabupaten || place.kode_kabupaten;
+  let lon = body.longitude ? parseFloat(body.longitude) : null;
+  let lat = body.latitude ? parseFloat(body.latitude) : null;
+
+  const isLocationChanged = lon !== null && lat !== null;
+  const isKabupatenChanged =
+    body.kode_kabupaten && body.kode_kabupaten !== place.kode_kabupaten;
+
+  if (isLocationChanged) {
+    let [existingPlace] = await sequelize.query(
+      `SELECT uuid, name_place 
+       FROM tbl_geo_point_place 
+       WHERE ST_Equals(geom, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)) 
+         AND uuid != :uuid
+       LIMIT 1;`,
+      { replacements: { lon, lat, uuid } },
+    );
+
+    if (existingPlace && existingPlace.length > 0) {
+      throw new Error(
+        `Data tempat dengan nama '${existingPlace[0].name_place}' sudah ada di lokasi ini`,
+      );
+    }
+  }
+
+  let kode_provinsi = place.kode_provinsi;
+  let nama_provinsi = place.nama_provinsi;
+  let nama_kabupaten = place.nama_kabupaten;
+
+  if (isLocationChanged || isKabupatenChanged) {
+    if (!lon || !lat) {
+      throw new Error(
+        "Pembaruan kode_kabupaten wajib menyertakan koordinat longitude dan latitude yang baru.",
+      );
+    }
+
+    let [wilayahRows] = await sequelize.query(
+      `SELECT wilayah.kode_provinsi, wilayah.nama_provinsi, wilayah.kode_kabupaten, wilayah.nama_kabupaten,
+              ST_Contains(wilayah.geom, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)) AS is_inside
+       FROM tbl_geo_wilayah AS wilayah 
+       WHERE wilayah.kode_kabupaten = :kode_kabupaten 
+       LIMIT 1;`,
+      { replacements: { kode_kabupaten, lon, lat } },
+    );
+
+    if (!wilayahRows || wilayahRows.length === 0) {
+      throw new Error(
+        `Data wilayah dengan kode kabupaten '${kode_kabupaten}' tidak ditemukan`,
+      );
+    }
+
+    let { is_inside } = wilayahRows[0];
+    if (!is_inside) {
+      throw new Error(
+        `Titik koordinat (${lat}, ${lon}) tidak valid karena berada di luar wilayah administratif ${wilayahRows[0].nama_kabupaten} (${wilayahRows[0].nama_provinsi})`,
+      );
+    }
+
+    kode_provinsi = wilayahRows[0].kode_provinsi;
+    nama_provinsi = wilayahRows[0].nama_provinsi;
+    nama_kabupaten = wilayahRows[0].nama_kabupaten;
+  }
+  place.name_place = body.name_place || place.name_place;
+  place.description = Object.prototype.hasOwnProperty.call(body, "description")
+    ? body.description
+    : place.description;
+  place.uuid_user = Object.prototype.hasOwnProperty.call(body, "uuid_user")
+    ? body.uuid_user
+    : place.uuid_user;
+
+  place.kode_provinsi = kode_provinsi;
+  place.nama_provinsi = nama_provinsi;
+  place.kode_kabupaten = kode_kabupaten;
+  place.nama_kabupaten = nama_kabupaten;
+
+  if (isLocationChanged) {
+    place.geom = sequelize.fn(
+      "ST_SetSRID",
+      sequelize.fn("ST_MakePoint", lon, lat),
+      4326,
+    );
+  }
+  await place.save();
+  await place.reload();
+
+  return place;
+};
+
 module.exports = {
   AddPlaceService,
   GetAllPlaceService,
+  UpdatePlaceService,
 };

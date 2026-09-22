@@ -1,6 +1,10 @@
 const { validationResult } = require("express-validator");
 const { formatError } = require("../pkg/error-formatter.pkg");
-const { AddPlaceService, GetAllPlaceService } = require("../service/point-places.service");
+const {
+  AddPlaceService,
+  GetAllPlaceService,
+  UpdatePlaceService,
+} = require("../service/point-places.service");
 
 const CreatePlaceController = async (req, res, next) => {
   const errors = validationResult(req);
@@ -48,9 +52,31 @@ const GetAllPlaceController = async (req, res, next) => {
     console.error("Error in GetAllPlaceController:", error.message);
     return res.status(500).json(formatError(error.message, "server"));
   }
-}
+};
+
+const UpdatePlaceController = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  let body = req.body;
+  let uuid = req.params.uuid;
+
+  try {
+    let updatedPlace = await UpdatePlaceService(uuid, body);
+
+    return res.status(200).json({
+      message: "Tempat berhasil diperbarui",
+      data: updatedPlace,
+    });
+  } catch (error) {
+    console.error("Error in UpdatePlaceController:", error.message);
+    return res.status(500).json(formatError(error.message, "server"));
+  }
+};
 
 module.exports = {
   CreatePlaceController,
   GetAllPlaceController,
+  UpdatePlaceController,
 };
