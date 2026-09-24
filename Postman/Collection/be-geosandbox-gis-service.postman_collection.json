@@ -117,6 +117,159 @@
 			"response": []
 		},
 		{
+			"name": "get all kabupaten/kota",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/kabupaten/get-all",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"kabupaten",
+						"get-all"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get selected kabupaten/kota",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/selected-area/kecamatan/72",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"selected-area",
+						"kecamatan",
+						"72"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get selected-area kabupaten/kota",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/selected-area/kecamatan-area/72",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"selected-area",
+						"kecamatan-area",
+						"72"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get selected-area point bbox",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/selected-area/points/bbox?min_lon=107.59889602661134&min_lat=-6.923359482967472&max_lon=107.61692047119142&max_lat=-6.913475618628448",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"selected-area",
+						"points",
+						"bbox"
+					],
+					"query": [
+						{
+							"key": "min_lon",
+							"value": "107.59889602661134"
+						},
+						{
+							"key": "min_lat",
+							"value": "-6.923359482967472"
+						},
+						{
+							"key": "max_lon",
+							"value": "107.61692047119142"
+						},
+						{
+							"key": "max_lat",
+							"value": "-6.913475618628448"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get detail kabupaten/kota",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/kabupaten/detail/detail/56877",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"kabupaten",
+						"detail",
+						"detail",
+						"56877"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "get all provinsi with geom Copy",
 			"request": {
 				"auth": {
