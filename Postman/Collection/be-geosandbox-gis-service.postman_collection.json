@@ -1,0 +1,146 @@
+{
+	"info": {
+		"_postman_id": "0c212781-9530-4c28-b459-a2d679fce01a",
+		"name": "be-geosandbox-gis-service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21807576",
+		"_collection_link": "https://blue-rocket-102937.postman.co/workspace/My-Workspace~09f9e03d-cd71-4a80-83f3-6765d15cbdb6/collection/21807576-0c212781-9530-4c28-b459-a2d679fce01a?action=share&source=collection_link&creator=21807576"
+	},
+	"item": [
+		{
+			"name": "get all places Copy",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/point/get-all?search=&page=1&size=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"point",
+						"get-all"
+					],
+					"query": [
+						{
+							"key": "search",
+							"value": ""
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "size",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post places Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMjUwZGNlODQtMDY5Ni00N2NiLWE1ZGMtNjZhOTgyOGI4ZTVjIiwiZW1haWwiOiJsNjg2dW5ub2d2QG9saXBpaS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc5MDA0NDc1MiwiZXhwIjoxNzkwMDQ1NjUyfQ.GQ7ITb_hXtaOOIzcHLDggTOQXAVA8xfNXiNtzdk6y9Q",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name_place\":\"Alun-Alun Cimahi\",\n    \"kode_kabupaten\":\"32.72\",\n    \"longitude\":106.928726,\n    \"latitude\":-6.923700\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/point/add",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"point",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all provinsi Copy",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/provinsi/detail/name",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"provinsi",
+						"detail",
+						"name"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all provinsi with geom Copy",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/gis/provinsi/get-all",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"gis",
+						"provinsi",
+						"get-all"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
