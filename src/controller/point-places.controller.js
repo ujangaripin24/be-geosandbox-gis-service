@@ -4,6 +4,7 @@ const {
   AddPlaceService,
   GetAllPlaceService,
   UpdatePlaceService,
+  SeacrhByNominatimService,
 } = require("../service/point-places.service");
 
 const CreatePlaceController = async (req, res, next) => {
@@ -75,8 +76,35 @@ const UpdatePlaceController = async (req, res, next) => {
   }
 };
 
+const SearchPlaceByNominatimController = async (req, res) => {
+  try {
+    const { q, limit, format } = req.query;
+
+    if (!q || !q.trim()) {
+      return res
+        .status(400)
+        .json(formatError("Query pencarian 'q' wajib diisi", "validation"));
+    }
+
+    const data = await SeacrhByNominatimService({
+      q,
+      limit: limit ? parseInt(limit) : 10,
+      format: format || "geojson",
+    });
+
+    return res.status(200).json({
+      message: "Berhasil mencari alamat via Nominatim",
+      data,
+    });
+  } catch (error) {
+    console.error("Error in SearchPlaceByNominatimController:", error.message);
+    return res.status(500).json(formatError(error.message, "server"));
+  }
+};
+
 module.exports = {
   CreatePlaceController,
   GetAllPlaceController,
   UpdatePlaceController,
+  SearchPlaceByNominatimController,
 };

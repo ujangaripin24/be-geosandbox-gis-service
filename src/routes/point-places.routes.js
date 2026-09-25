@@ -9,6 +9,7 @@ const {
   CreatePlaceController,
   GetAllPlaceController,
   UpdatePlaceController,
+  SearchPlaceByNominatimController,
 } = require("../controller/point-places.controller");
 
 const router = express.Router();
@@ -43,5 +44,7 @@ router.put(
   },
   UpdatePlaceController,
 );
+
+router.get("/gis/point/search-nominatim", SearchPlaceByNominatimController);
 
 module.exports = router;

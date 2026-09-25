@@ -263,8 +263,53 @@ const UpdatePlaceService = async (uuid, body) => {
   return place;
 };
 
+const SeacrhByNominatimService = async ({
+  q,
+  limit = 10,
+  format = "geojson",
+}) => {
+  if (!q || !q.trim()) {
+    throw new Error("Kata kunci pencarian alamat tidak boleh kosong");
+  }
+
+  const nominatimBaseUrl =
+    process.env.NOMINATIM_URL || "http://global-nominatim-search:8080";
+
+  const javaViewbox = "105.1,-5.8,114.6,-8.8";
+
+  const params = new URLSearchParams({
+    q: q.trim(),
+    format: format === "geojson" ? "geojson" : "jsonv2",
+    countrycodes: "id",
+    viewbox: javaViewbox,
+    bounded: "1",
+    addressdetails: "1",
+    limit: String(limit),
+  });
+
+  const url = `${nominatimBaseUrl}/search?${params.toString()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "User-Agent": "GeoSandbox-GIS-Service/1.0",
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Gagal mengambil data dari Nominatim: [${response.status}] ${response.statusText}`,
+    );
+  }
+
+  const result = await response.json();
+  return result;
+};
+
 module.exports = {
   AddPlaceService,
   GetAllPlaceService,
   UpdatePlaceService,
+  SeacrhByNominatimService,
 };
