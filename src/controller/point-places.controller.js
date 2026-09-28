@@ -78,7 +78,7 @@ const UpdatePlaceController = async (req, res, next) => {
 
 const SearchPlaceByNominatimController = async (req, res) => {
   try {
-    const { q, limit, format } = req.query;
+    const { q, limit, format, viewbox, bounded } = req.query;
 
     if (!q || !q.trim()) {
       return res
@@ -90,6 +90,8 @@ const SearchPlaceByNominatimController = async (req, res) => {
       q,
       limit: limit ? parseInt(limit) : 10,
       format: format || "geojson",
+      viewbox,
+      bounded: bounded === "1" || bounded === "true",
     });
 
     return res.status(200).json({

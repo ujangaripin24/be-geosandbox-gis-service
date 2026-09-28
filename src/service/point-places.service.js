@@ -133,8 +133,8 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
   let offset = (page - 1) * limit;
   let where = search
     ? {
-        [Op.or]: [{ name_place: { [Op.like]: `%${search}%` } }],
-      }
+      [Op.or]: [{ name_place: { [Op.like]: `%${search}%` } }],
+    }
     : {};
 
   let { rows, count } = await TblPointPlace.findAndCountAll({
@@ -267,44 +267,61 @@ const SeacrhByNominatimService = async ({
   q,
   limit = 10,
   format = "geojson",
+  viewbox = null,
+  bounded = false,
 }) => {
   if (!q || !q.trim()) {
     throw new Error("Kata kunci pencarian alamat tidak boleh kosong");
   }
 
-  const nominatimBaseUrl =
-    process.env.NOMINATIM_URL || "http://global-nominatim-search:8080";
+  const nominatimBaseUrl = process.env.NOMINATIM_URL;
 
-  const javaViewbox = "105.1,-5.8,114.6,-8.8";
-
-  const params = new URLSearchParams({
+  const searchParams = {
     q: q.trim(),
     format: format === "geojson" ? "geojson" : "jsonv2",
     countrycodes: "id",
-    viewbox: javaViewbox,
-    bounded: "1",
     addressdetails: "1",
     limit: String(limit),
-  });
+  };
 
-  const url = `${nominatimBaseUrl}/search?${params.toString()}`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "User-Agent": "GeoSandbox-GIS-Service/1.0",
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Gagal mengambil data dari Nominatim: [${response.status}] ${response.statusText}`,
-    );
+  if (viewbox) {
+    searchParams.viewbox = viewbox;
+    if (bounded) {
+      searchParams.bounded = "1";
+    }
   }
 
-  const result = await response.json();
-  return result;
+  const params = new URLSearchParams(searchParams);
+  const url = `${nominatimBaseUrl}/search?${params.toString()}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "User-Agent": "GeoSandbox-GIS-Service/1.0",
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Gagal mengambil data dari Nominatim: [${response.status}] ${response.statusText}`,
+      );
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    if (
+      err.message.includes("fetch failed") ||
+      err.code === "ECONNREFUSED"
+    ) {
+      throw new Error(
+        `Gagal terhubung ke Nominatim (${nominatimBaseUrl}). Container 'global-nominatim-search' sedang melakukan inisialisasi/import data OSM atau belum siap menerima request.`,
+      );
+    }
+    throw err;
+  }
 };
 
 module.exports = {
