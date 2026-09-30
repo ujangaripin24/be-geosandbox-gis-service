@@ -5,6 +5,9 @@ const {
   GetAllPlaceService,
   UpdatePlaceService,
   SeacrhByNominatimService,
+  DirectionOSRMBackendService,
+  DirectionOSRMTwoWayPointService,
+  DirectionOSRMMultipleWayPointService,
 } = require("../service/point-places.service");
 
 const CreatePlaceController = async (req, res, next) => {
@@ -104,9 +107,98 @@ const SearchPlaceByNominatimController = async (req, res) => {
   }
 };
 
+const DirectionOSRMController = async (req, res) => {
+  try {
+    const { startLat, startLon, endLat, endLon, profile } = req.query;
+
+    const data = await DirectionOSRMBackendService({
+      startLat,
+      startLon,
+      endLat,
+      endLon,
+      profile,
+    });
+
+    return res.status(200).json({
+      message: "Berhasil mendapatkan petunjuk arah (routing) via OSRM Backend",
+      data,
+    });
+  } catch (error) {
+    console.error("Error in DirectionOSRMController:", error.message);
+    return res.status(500).json(formatError(error.message, "server"));
+  }
+};
+
+const DirectionOSRMTwoWayPointController = async (req, res) => {
+  try {
+    const { start_lat, start_lon, end_lat, end_lon, startLat, startLon, endLat, endLon, profile } = req.query;
+
+    const data = await DirectionOSRMTwoWayPointService({
+      start_lat,
+      start_lon,
+      end_lat,
+      end_lon,
+      startLat,
+      startLon,
+      endLat,
+      endLon,
+      profile,
+    });
+
+    return res.status(200).json({
+      message: "Berhasil mendapatkan petunjuk arah (routing) 2 titik via OSRM Backend",
+      data,
+    });
+  } catch (error) {
+    console.error("Error in DirectionOSRMTwoWayPointController:", error.message);
+    if (error.message.includes("wajib diisi dengan angka valid")) {
+      return res.status(400).json(formatError(error.message, "validation"));
+    }
+    return res.status(500).json(formatError(error.message, "server"));
+  }
+};
+
+const DirectionOSRMMultipleWayPointController = async (req, res) => {
+  try {
+    let points = req.body?.points || req.query?.points;
+    let profile = req.body?.profile || req.query?.profile;
+
+    if (typeof points === "string" && (points.startsWith("[") || points.startsWith("{"))) {
+      try {
+        points = JSON.parse(points);
+      } catch (e) {
+        // Keep string format
+      }
+    }
+
+    const data = await DirectionOSRMMultipleWayPointService({
+      points,
+      profile,
+    });
+
+    return res.status(200).json({
+      message: "Berhasil mendapatkan petunjuk arah (routing) multiple waypoint via OSRM Backend",
+      data,
+    });
+  } catch (error) {
+    console.error("Error in DirectionOSRMMultipleWayPointController:", error.message);
+    if (
+      error.message.includes("wajib diisi") ||
+      error.message.includes("minimal 2 titik") ||
+      error.message.includes("tidak valid")
+    ) {
+      return res.status(400).json(formatError(error.message, "validation"));
+    }
+    return res.status(500).json(formatError(error.message, "server"));
+  }
+};
+
 module.exports = {
   CreatePlaceController,
   GetAllPlaceController,
   UpdatePlaceController,
   SearchPlaceByNominatimController,
+  DirectionOSRMController,
+  DirectionOSRMTwoWayPointController,
+  DirectionOSRMMultipleWayPointController,
 };

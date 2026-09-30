@@ -324,9 +324,198 @@ const SeacrhByNominatimService = async ({
   }
 };
 
+const DirectionOSRMBackendService = async (options = {}) => {
+  // Hardcoded default coordinates if not supplied:
+  // Start Point (Banda Aceh): lat 5.5400, lon 95.3300
+  // End Point (Bandar Lampung): lat -5.4300, lon 105.2600
+  const startLat = options.startLat !== undefined && options.startLat !== "" ? parseFloat(options.startLat) : 5.5400;
+  const startLon = options.startLon !== undefined && options.startLon !== "" ? parseFloat(options.startLon) : 95.3300;
+  const endLat = options.endLat !== undefined && options.endLat !== "" ? parseFloat(options.endLat) : -5.4300;
+  const endLon = options.endLon !== undefined && options.endLon !== "" ? parseFloat(options.endLon) : 105.2600;
+  const profile = options.profile || "driving";
+
+  const osrmBaseUrl = process.env.OSRM_URL || "http://global-osrm-backend:5000";
+
+  // OSRM API expects longitude,latitude;longitude,latitude
+  const coordinates = `${startLon},${startLat};${endLon},${endLat}`;
+  const url = `${osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Gagal mengambil data rute dari OSRM: [${response.status}] ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    if (
+      err.message.includes("fetch failed") ||
+      err.code === "ECONNREFUSED"
+    ) {
+      throw new Error(
+        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`
+      );
+    }
+    throw err;
+  }
+};
+
+const DirectionOSRMTwoWayPointService = async (data = {}) => {
+  const {
+    start_lat,
+    start_lon,
+    end_lat,
+    end_lon,
+    startLat,
+    startLon,
+    endLat,
+    endLon,
+    profile = "driving",
+  } = data;
+
+  const lat1 = start_lat !== undefined && start_lat !== "" ? parseFloat(start_lat) : (startLat !== undefined && startLat !== "" ? parseFloat(startLat) : null);
+  const lon1 = start_lon !== undefined && start_lon !== "" ? parseFloat(start_lon) : (startLon !== undefined && startLon !== "" ? parseFloat(startLon) : null);
+  const lat2 = end_lat !== undefined && end_lat !== "" ? parseFloat(end_lat) : (endLat !== undefined && endLat !== "" ? parseFloat(endLat) : null);
+  const lon2 = end_lon !== undefined && end_lon !== "" ? parseFloat(end_lon) : (endLon !== undefined && endLon !== "" ? parseFloat(endLon) : null);
+
+  if (lat1 === null || isNaN(lat1) || lon1 === null || isNaN(lon1)) {
+    throw new Error("Koordinat titik asal (start_lat & start_lon) wajib diisi dengan angka valid");
+  }
+
+  if (lat2 === null || isNaN(lat2) || lon2 === null || isNaN(lon2)) {
+    throw new Error("Koordinat titik tujuan (end_lat & end_lon) wajib diisi dengan angka valid");
+  }
+
+  const osrmBaseUrl = process.env.OSRM_URL || "http://global-osrm-backend:5000";
+
+  // OSRM API expects longitude,latitude;longitude,latitude
+  const coordinates = `${lon1},${lat1};${lon2},${lat2}`;
+  const url = `${osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Gagal mengambil data rute dari OSRM: [${response.status}] ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    if (
+      err.message.includes("fetch failed") ||
+      err.code === "ECONNREFUSED"
+    ) {
+      throw new Error(
+        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`
+      );
+    }
+    throw err;
+  }
+};
+
+const DirectionOSRMMultipleWayPointService = async (data = {}) => {
+  let { points, profile = "driving" } = data;
+
+  if (!points) {
+    throw new Error("Parameter 'points' wajib diisi (minimal 2 titik lokasi)");
+  }
+
+  let coordString = "";
+
+  if (Array.isArray(points)) {
+    if (points.length < 2) {
+      throw new Error("Daftar titik lokasi 'points' harus berisi minimal 2 titik");
+    }
+
+    const formattedPoints = [];
+    points.forEach((pt, index) => {
+      let lat, lon;
+      if (typeof pt === "object" && pt !== null) {
+        lat = pt.lat !== undefined ? pt.lat : (pt.latitude !== undefined ? pt.latitude : null);
+        lon = pt.lon !== undefined ? pt.lon : (pt.longitude !== undefined ? pt.longitude : null);
+      } else if (typeof pt === "string") {
+        const parts = pt.split(",");
+        if (parts.length === 2) {
+          lat = parseFloat(parts[0]);
+          lon = parseFloat(parts[1]);
+        }
+      }
+
+      const parsedLat = parseFloat(lat);
+      const parsedLon = parseFloat(lon);
+
+      if (isNaN(parsedLat) || isNaN(parsedLon)) {
+        throw new Error(`Titik lokasi pada indeks ${index} tidak valid (lat & lon wajib angka)`);
+      }
+
+      // OSRM API expects longitude,latitude
+      formattedPoints.push(`${parsedLon},${parsedLat}`);
+    });
+
+    coordString = formattedPoints.join(";");
+  } else if (typeof points === "string") {
+    coordString = points.trim();
+  }
+
+  if (!coordString || coordString.split(";").length < 2) {
+    throw new Error("Format 'points' tidak valid. Diperlukan minimal 2 titik lokasi.");
+  }
+
+  const osrmBaseUrl = process.env.OSRM_URL || "http://global-osrm-backend:5000";
+  const url = `${osrmBaseUrl}/route/v1/${profile}/${coordString}?overview=full&geometries=geojson&steps=true`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Gagal mengambil data rute multiple waypoint dari OSRM: [${response.status}] ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    if (
+      err.message.includes("fetch failed") ||
+      err.code === "ECONNREFUSED"
+    ) {
+      throw new Error(
+        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`
+      );
+    }
+    throw err;
+  }
+};
+
 module.exports = {
   AddPlaceService,
   GetAllPlaceService,
   UpdatePlaceService,
   SeacrhByNominatimService,
+  DirectionOSRMBackendService,
+  DirectionOSRMTwoWayPointService,
+  DirectionOSRMMultipleWayPointService,
 };
