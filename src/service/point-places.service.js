@@ -334,7 +334,7 @@ const DirectionOSRMBackendService = async (options = {}) => {
   const endLon = options.endLon !== undefined && options.endLon !== "" ? parseFloat(options.endLon) : 105.2600;
   const profile = options.profile || "driving";
 
-  const osrmBaseUrl = process.env.OSRM_URL || "http://global-osrm-backend:5000";
+  const osrmBaseUrl = process.env.OSRM_URL;
 
   // OSRM API expects longitude,latitude;longitude,latitude
   const coordinates = `${startLon},${startLat};${endLon},${endLat}`;
@@ -395,7 +395,7 @@ const DirectionOSRMTwoWayPointService = async (data = {}) => {
     throw new Error("Koordinat titik tujuan (end_lat & end_lon) wajib diisi dengan angka valid");
   }
 
-  const osrmBaseUrl = process.env.OSRM_URL || "http://global-osrm-backend:5000";
+  const osrmBaseUrl = process.env.OSRM_URL;
 
   // OSRM API expects longitude,latitude;longitude,latitude
   const coordinates = `${lon1},${lat1};${lon2},${lat2}`;
@@ -478,7 +478,7 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
     throw new Error("Format 'points' tidak valid. Diperlukan minimal 2 titik lokasi.");
   }
 
-  const osrmBaseUrl = process.env.OSRM_URL || "http://global-osrm-backend:5000";
+  const osrmBaseUrl = process.env.OSRM_URL;
   const url = `${osrmBaseUrl}/route/v1/${profile}/${coordString}?overview=full&geometries=geojson&steps=true`;
 
   try {
