@@ -6,13 +6,14 @@ const helmet = require("helmet");
 const createError = require("http-errors");
 const messageBroker = require("./config/message-broker.config");
 const database = require("./config/database.config");
-const {listenUserUpdatedQueue } = require("./pkg/message-broker/user.subscriber");
+const { listenUserUpdatedQueue } = require("./pkg/message-broker/user.subscriber");
 // const fs = require("fs");
 // const path = require("path");
 const provinsiRouter = require("./routes/provinsi.routes");
 const kabupatenRouter = require("./routes/kabupaten.routes");
 const selectedAreaRouter = require("./routes/selected-area.routes");
 const pointPlacesRouter = require("./routes/point-places.routes");
+const folderProjectRouter = require("./routes/folder-project.routes");
 const rustfsClient = require("./config/storage-s3.config");
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use("/api/v1", provinsiRouter);
 app.use("/api/v1", kabupatenRouter);
 app.use("/api/v1", selectedAreaRouter);
 app.use("/api/v1", pointPlacesRouter);
+app.use("/api/v1", folderProjectRouter);
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -45,7 +47,7 @@ app.listen(process.env.APP_PORT, async () => {
   try {
     await database.authenticate();
     await messageBroker.connectRabbitMQ();
-    await rustfsClient.connectionStorageS3(); 
+    await rustfsClient.connectionStorageS3();
     await listenUserUpdatedQueue();
   } catch (error) {
     console.error("Unable to start server:");
