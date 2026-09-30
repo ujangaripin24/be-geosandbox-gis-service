@@ -28,7 +28,8 @@ const CreatePlaceController = async (req, res, next) => {
     });
 
     return res.status(201).json({
-      message: "Tempat berhasil ditambahkan",
+      message: "Success",
+      status: 200,
       data: placeData,
     });
   } catch (error) {
@@ -49,7 +50,8 @@ const GetAllPlaceController = async (req, res, next) => {
     let placeData = await GetAllPlaceService({ page, size, search });
 
     return res.status(200).json({
-      message: "Data tempat berhasil diambil",
+      message: "Success",
+      status: 200,
       data: placeData,
     });
   } catch (error) {
@@ -70,7 +72,8 @@ const UpdatePlaceController = async (req, res, next) => {
     let updatedPlace = await UpdatePlaceService(uuid, body);
 
     return res.status(200).json({
-      message: "Tempat berhasil diperbarui",
+      message: "Success",
+      status: 200,
       data: updatedPlace,
     });
   } catch (error) {
@@ -120,7 +123,8 @@ const DirectionOSRMController = async (req, res) => {
     });
 
     return res.status(200).json({
-      message: "Berhasil mendapatkan petunjuk arah (routing) via OSRM Backend",
+      message: "Success",
+      status: 200,
       data,
     });
   } catch (error) {
@@ -146,7 +150,8 @@ const DirectionOSRMTwoWayPointController = async (req, res) => {
     });
 
     return res.status(200).json({
-      message: "Berhasil mendapatkan petunjuk arah (routing) 2 titik via OSRM Backend",
+      message: "Success",
+      status: 200,
       data,
     });
   } catch (error) {
@@ -177,7 +182,8 @@ const DirectionOSRMMultipleWayPointController = async (req, res) => {
     });
 
     return res.status(200).json({
-      message: "Berhasil mendapatkan petunjuk arah (routing) multiple waypoint via OSRM Backend",
+      message: "Success",
+      status: 200,
       data,
     });
   } catch (error) {
