@@ -1,6 +1,11 @@
 const { Op } = require("sequelize");
 const { toGeoJSONFeature } = require("../validation/kabupaten.validation");
 const { sequelize, TblPointPlace } = require("../models");
+const dotenv = require("dotenv");
+dotenv.config();
+
+const osrmBaseUrl = process.env.OSRM_URL_API;
+const nominatimBaseUrl = process.env.NOMINATIM_URL_API;
 
 const AddPlaceService = async (data) => {
   let {
@@ -274,9 +279,7 @@ const SeacrhByNominatimService = async ({
     throw new Error("Kata kunci pencarian alamat tidak boleh kosong");
   }
 
-  const nominatimBaseUrl = process.env.NOMINATIM_URL;
-
-  const searchParams = {
+  let searchParams = {
     q: q.trim(),
     format: format === "geojson" ? "geojson" : "jsonv2",
     countrycodes: "id",
@@ -291,11 +294,11 @@ const SeacrhByNominatimService = async ({
     }
   }
 
-  const params = new URLSearchParams(searchParams);
-  const url = `${nominatimBaseUrl}/search?${params.toString()}`;
+  let params = new URLSearchParams(searchParams);
+  let url = `${nominatimBaseUrl}/search?${params.toString()}`;
 
   try {
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: "GET",
       headers: {
         "User-Agent": "GeoSandbox-GIS-Service/1.0",
@@ -309,7 +312,7 @@ const SeacrhByNominatimService = async ({
       );
     }
 
-    const result = await response.json();
+    let result = await response.json();
     return result;
   } catch (err) {
     if (
@@ -328,20 +331,18 @@ const DirectionOSRMBackendService = async (options = {}) => {
   // Hardcoded default coordinates if not supplied:
   // Start Point (Banda Aceh): lat 5.5400, lon 95.3300
   // End Point (Bandar Lampung): lat -5.4300, lon 105.2600
-  const startLat = options.startLat !== undefined && options.startLat !== "" ? parseFloat(options.startLat) : 5.5400;
-  const startLon = options.startLon !== undefined && options.startLon !== "" ? parseFloat(options.startLon) : 95.3300;
-  const endLat = options.endLat !== undefined && options.endLat !== "" ? parseFloat(options.endLat) : -5.4300;
-  const endLon = options.endLon !== undefined && options.endLon !== "" ? parseFloat(options.endLon) : 105.2600;
-  const profile = options.profile || "driving";
-
-  const osrmBaseUrl = process.env.OSRM_URL;
+  let startLat = options.startLat !== undefined && options.startLat !== "" ? parseFloat(options.startLat) : 5.5400;
+  let startLon = options.startLon !== undefined && options.startLon !== "" ? parseFloat(options.startLon) : 95.3300;
+  let endLat = options.endLat !== undefined && options.endLat !== "" ? parseFloat(options.endLat) : -5.4300;
+  let endLon = options.endLon !== undefined && options.endLon !== "" ? parseFloat(options.endLon) : 105.2600;
+  let profile = options.profile || "driving";
 
   // OSRM API expects longitude,latitude;longitude,latitude
-  const coordinates = `${startLon},${startLat};${endLon},${endLat}`;
-  const url = `${osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
+  let coordinates = `${startLon},${startLat};${endLon},${endLat}`;
+  let url = `${osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
 
   try {
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -354,7 +355,7 @@ const DirectionOSRMBackendService = async (options = {}) => {
       );
     }
 
-    const result = await response.json();
+    let result = await response.json();
     return result;
   } catch (err) {
     if (
@@ -370,7 +371,7 @@ const DirectionOSRMBackendService = async (options = {}) => {
 };
 
 const DirectionOSRMTwoWayPointService = async (data = {}) => {
-  const {
+  let {
     start_lat,
     start_lon,
     end_lat,
@@ -382,10 +383,10 @@ const DirectionOSRMTwoWayPointService = async (data = {}) => {
     profile = "driving",
   } = data;
 
-  const lat1 = start_lat !== undefined && start_lat !== "" ? parseFloat(start_lat) : (startLat !== undefined && startLat !== "" ? parseFloat(startLat) : null);
-  const lon1 = start_lon !== undefined && start_lon !== "" ? parseFloat(start_lon) : (startLon !== undefined && startLon !== "" ? parseFloat(startLon) : null);
-  const lat2 = end_lat !== undefined && end_lat !== "" ? parseFloat(end_lat) : (endLat !== undefined && endLat !== "" ? parseFloat(endLat) : null);
-  const lon2 = end_lon !== undefined && end_lon !== "" ? parseFloat(end_lon) : (endLon !== undefined && endLon !== "" ? parseFloat(endLon) : null);
+  let lat1 = start_lat !== undefined && start_lat !== "" ? parseFloat(start_lat) : (startLat !== undefined && startLat !== "" ? parseFloat(startLat) : null);
+  let lon1 = start_lon !== undefined && start_lon !== "" ? parseFloat(start_lon) : (startLon !== undefined && startLon !== "" ? parseFloat(startLon) : null);
+  let lat2 = end_lat !== undefined && end_lat !== "" ? parseFloat(end_lat) : (endLat !== undefined && endLat !== "" ? parseFloat(endLat) : null);
+  let lon2 = end_lon !== undefined && end_lon !== "" ? parseFloat(end_lon) : (endLon !== undefined && endLon !== "" ? parseFloat(endLon) : null);
 
   if (lat1 === null || isNaN(lat1) || lon1 === null || isNaN(lon1)) {
     throw new Error("Koordinat titik asal (start_lat & start_lon) wajib diisi dengan angka valid");
@@ -395,14 +396,12 @@ const DirectionOSRMTwoWayPointService = async (data = {}) => {
     throw new Error("Koordinat titik tujuan (end_lat & end_lon) wajib diisi dengan angka valid");
   }
 
-  const osrmBaseUrl = process.env.OSRM_URL;
-
   // OSRM API expects longitude,latitude;longitude,latitude
-  const coordinates = `${lon1},${lat1};${lon2},${lat2}`;
-  const url = `${osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
+  let coordinates = `${lon1},${lat1};${lon2},${lat2}`;
+  let url = `${osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
 
   try {
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -415,7 +414,7 @@ const DirectionOSRMTwoWayPointService = async (data = {}) => {
       );
     }
 
-    const result = await response.json();
+    let result = await response.json();
     return result;
   } catch (err) {
     if (
@@ -444,22 +443,22 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
       throw new Error("Daftar titik lokasi 'points' harus berisi minimal 2 titik");
     }
 
-    const formattedPoints = [];
+    let formattedPoints = [];
     points.forEach((pt, index) => {
       let lat, lon;
       if (typeof pt === "object" && pt !== null) {
         lat = pt.lat !== undefined ? pt.lat : (pt.latitude !== undefined ? pt.latitude : null);
         lon = pt.lon !== undefined ? pt.lon : (pt.longitude !== undefined ? pt.longitude : null);
       } else if (typeof pt === "string") {
-        const parts = pt.split(",");
+        let parts = pt.split(",");
         if (parts.length === 2) {
           lat = parseFloat(parts[0]);
           lon = parseFloat(parts[1]);
         }
       }
 
-      const parsedLat = parseFloat(lat);
-      const parsedLon = parseFloat(lon);
+      let parsedLat = parseFloat(lat);
+      let parsedLon = parseFloat(lon);
 
       if (isNaN(parsedLat) || isNaN(parsedLon)) {
         throw new Error(`Titik lokasi pada indeks ${index} tidak valid (lat & lon wajib angka)`);
@@ -478,11 +477,11 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
     throw new Error("Format 'points' tidak valid. Diperlukan minimal 2 titik lokasi.");
   }
 
-  const osrmBaseUrl = process.env.OSRM_URL;
-  const url = `${osrmBaseUrl}/route/v1/${profile}/${coordString}?overview=full&geometries=geojson&steps=true`;
+  let osrmBaseUrl = process.env.OSRM_URL;
+  let url = `${osrmBaseUrl}/route/v1/${profile}/${coordString}?overview=full&geometries=geojson&steps=true`;
 
   try {
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -495,7 +494,7 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
       );
     }
 
-    const result = await response.json();
+    let result = await response.json();
     return result;
   } catch (err) {
     if (
