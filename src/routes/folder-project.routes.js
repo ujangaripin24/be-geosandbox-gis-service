@@ -12,6 +12,7 @@ const {
   UpdateFolderProjectController,
   DeleteFolderProjectController,
 } = require("../controller/folder-project.controller");
+const { checkFolderOwnership } = require("../middlewares/folder-project.middleware");
 
 const router = express.Router();
 
@@ -40,12 +41,14 @@ router.get(
 router.get(
   "/gis/folder-project/get/:uuid",
   authenticateTokenGuard,
+  checkFolderOwnership,
   GetDetailFolderProjectController
 );
 
 router.put(
   "/gis/folder-project/update/:uuid",
   authenticateTokenGuard,
+  checkFolderOwnership,
   UpdateFolderProjectValidation,
   handleValidation,
   UpdateFolderProjectController
@@ -54,6 +57,7 @@ router.put(
 router.delete(
   "/gis/folder-project/delete/:uuid",
   authenticateTokenGuard,
+  checkFolderOwnership,
   DeleteFolderProjectController
 );
 

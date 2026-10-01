@@ -18,7 +18,7 @@ const CreateFolderProjectController = async (req, res) => {
     const uuid_user = req.user.uuid;
     const { name, detail } = req.body;
 
-    const data = await CreateFolderProjectService({
+    await CreateFolderProjectService({
       name,
       detail,
       uuid_user,
@@ -27,7 +27,6 @@ const CreateFolderProjectController = async (req, res) => {
     return res.status(201).json({
       message: "Folder project berhasil dibuat",
       status: 201,
-      data,
     });
   } catch (error) {
     console.error("Error in CreateFolderProjectController:", error.message);
@@ -37,12 +36,8 @@ const CreateFolderProjectController = async (req, res) => {
 
 const GetAllFolderProjectController = async (req, res) => {
   try {
-    const { page, size, search, user_only } = req.query;
-    let uuid_user = null;
-
-    if (user_only === "true" || user_only === "1") {
-      uuid_user = req.user?.uuid || null;
-    }
+    const { page, size, search } = req.query;
+    const uuid_user = req.user.uuid;
 
     const data = await GetAllFolderProjectService({
       page,
