@@ -16,6 +16,11 @@ module.exports = (sequelize, DataTypes) => {
         targetKey: 'uuid',
         as: 'user'
       });
+      TblFolderProject.hasMany(models.TblProjectGeo, {
+        foreignKey: 'uuid_folder',
+        sourceKey: 'uuid',
+        as: 'projects'
+      });
     }
   }
   TblFolderProject.init({

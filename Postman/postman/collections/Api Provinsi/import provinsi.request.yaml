@@ -1,0 +1,14 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/provinsi/import
+method: POST
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src:
+        - /C:/Users/pratiwi24/Downloads/38 Provinsi Indonesia - Provinsi.json
+      description: ""
+      disabled: false
+order: 1054241534474963

@@ -1,0 +1,14 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/kabupaten/import
+method: POST
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src:
+        - /C:/Users/pratiwi24/Downloads/38 Provinsi Indonesia - Kabupaten.json
+      description: ""
+      disabled: false
+order: 1283883952074712
