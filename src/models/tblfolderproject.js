@@ -11,15 +11,37 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      TblFolderProject.belongsTo(models.DetailUsers, {
+        foreignKey: 'uuid_user',
+        targetKey: 'uuid',
+        as: 'user'
+      });
     }
   }
   TblFolderProject.init({
-    uuid: DataTypes.STRING,
-    name: DataTypes.STRING,
-    uuid_user: DataTypes.STRING
+    uuid: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+      allowNull: false
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    detail: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    uuid_user: {
+      type: DataTypes.UUID,
+      allowNull: false
+    }
   }, {
     sequelize,
     modelName: 'TblFolderProject',
+    tableName: 'tbl_folder_project',
+    timestamps: true
   });
   return TblFolderProject;
 };

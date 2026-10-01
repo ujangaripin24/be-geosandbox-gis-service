@@ -11,6 +11,11 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      DetailUsers.hasMany(models.TblFolderProject, {
+        foreignKey: 'uuid_user',
+        sourceKey: 'uuid',
+        as: 'folders'
+      });
     }
   }
   DetailUsers.init({
