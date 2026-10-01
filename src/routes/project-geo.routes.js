@@ -1,6 +1,7 @@
 const express = require("express");
 const { validationResult } = require("express-validator");
 const { authenticateTokenGuard } = require("../middlewares/auth.middleware");
+const { checkProjectGeoOwnership } = require("../middlewares/project-geo.middleware");
 const {
     CreateProjectGeoValidation,
     UpdateProjectGeoValidation,
@@ -40,12 +41,14 @@ router.get(
 router.get(
     "/gis/project-geo/get/:uuid",
     authenticateTokenGuard,
+    checkProjectGeoOwnership,
     GetDetailProjectGeoController
 );
 
 router.put(
     "/gis/project-geo/update/:uuid",
     authenticateTokenGuard,
+    checkProjectGeoOwnership,
     UpdateProjectGeoValidation,
     handleValidation,
     UpdateProjectGeoController
@@ -54,6 +57,7 @@ router.put(
 router.delete(
     "/gis/project-geo/delete/:uuid",
     authenticateTokenGuard,
+    checkProjectGeoOwnership,
     DeleteProjectGeoController
 );
 
