@@ -15,6 +15,7 @@ const selectedAreaRouter = require("./routes/selected-area.routes");
 const pointPlacesRouter = require("./routes/point-places.routes");
 const folderProjectRouter = require("./routes/folder-project.routes");
 const projectGeoRouter = require("./routes/project-geo.routes");
+const geometryProjectRouter = require("./routes/geometry-project.routes");
 const rustfsClient = require("./config/storage-s3.config");
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/api/v1", selectedAreaRouter);
 app.use("/api/v1", pointPlacesRouter);
 app.use("/api/v1", folderProjectRouter);
 app.use("/api/v1", projectGeoRouter);
+app.use("/api/v1", geometryProjectRouter);
 
 app.get("/", (req, res) => {
   res.status(200).json({
