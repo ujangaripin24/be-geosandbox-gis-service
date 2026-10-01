@@ -1,0 +1,7 @@
+# Use this workspace to collaborate
+workspace:
+  id: c51eec69-0a6e-4cfe-8b62-377d9a1156f4
+
+localResources:
+  collections:
+    - ../Collection/be-geosandbox-gis-service.postman_collection.json

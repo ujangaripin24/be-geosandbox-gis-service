@@ -1,0 +1,5 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/provinsi/get-all
+method: GET
+order: 1790851103133

@@ -1,0 +1,5 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/selected-area/kecamatan/72
+method: GET
+order: 3961686106034594

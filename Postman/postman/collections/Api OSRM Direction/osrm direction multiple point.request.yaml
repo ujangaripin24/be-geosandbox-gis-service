@@ -1,0 +1,20 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/point/direction-multiple-point
+method: GET
+body:
+  type: json
+  content: "{\r
+
+    \    \"points\": [\r
+
+    \    { \"lat\": 3.5961432, \"lon\": 98.6653298 },\r
+
+    \    { \"lat\": 3.5920606, \"lon\": 98.6653691 },\r
+
+    \    { \"lat\": 3.5923059, \"lon\": 98.6706693 }\r
+
+    \  ]\r
+
+    }"
+order: 3375020853924462

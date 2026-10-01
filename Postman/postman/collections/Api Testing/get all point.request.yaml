@@ -1,0 +1,9 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/point/get-all?search=&page=1&size=10
+method: GET
+queryParams:
+  search: ""
+  page: "1"
+  size: "10"
+order: 1790850824260

@@ -1,0 +1,10 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/point/direction-two-point?start_lat=3.5952&start_lon=98.6722&end_lat=3.594179&end_lon=98.668867
+method: GET
+queryParams:
+  start_lat: "3.5952"
+  start_lon: "98.6722"
+  end_lat: "3.594179"
+  end_lon: "98.668867"
+order: 1546678185184749

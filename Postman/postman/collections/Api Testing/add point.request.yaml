@@ -1,0 +1,18 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/point/add
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name_place\": \"Alun-Alun Cimahi\",\r
+
+    \  \"kode_kabupaten\": \"32.72\",\r
+
+    \  \"longitude\": 106.928726,\r
+
+    \  \"latitude\": -6.923700\r
+
+    }"
+order: 1982248330879124

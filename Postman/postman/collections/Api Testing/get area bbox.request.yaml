@@ -1,0 +1,10 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/selected-area/points/bbox?min_lon=107.59889602661134&min_lat=-6.923359482967472&max_lon=107.61692047119142&max_lat=-6.913475618628448
+method: GET
+queryParams:
+  min_lon: "107.59889602661134"
+  min_lat: "-6.923359482967472"
+  max_lon: "107.61692047119142"
+  max_lat: "-6.913475618628448"
+order: 4232633318853729
