@@ -98,7 +98,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/v1/gis/provinsi/detail/name",
+          "raw": "http://localhost:8000/api/v1/gis/provinsi/detail/name?search=Utara&size=10&page=1",
           "protocol": "http",
           "host": [
             "localhost"
@@ -111,6 +111,20 @@
             "provinsi",
             "detail",
             "name"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "Utara"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            }
           ]
         }
       },
@@ -418,6 +432,200 @@
             "gis",
             "point",
             "direction-multiple-point"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create folder project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNWI1ZDMxMWItMzBlNS00MTMzLWEzYjgtMjk4ZjBjYWI0MDFlIiwiZW1haWwiOiJqZWowZjh2YWtvQHJ1dXR1a2YuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTA4NjIyNjAsImV4cCI6MTc5MDg2MzE2MH0.BWiDI7uqK99kySlKtVKgy4ZRwTWaKnkQKIJ32b-CAHo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"Project Pemetaan Sumatera\",\r\n    \"detail\": \"Folder untuk menyimpan layer GIS Sumatra\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/folder-project/create",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "folder-project",
+            "create"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get all folder",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNWI1ZDMxMWItMzBlNS00MTMzLWEzYjgtMjk4ZjBjYWI0MDFlIiwiZW1haWwiOiJqZWowZjh2YWtvQHJ1dXR1a2YuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3OTA4NjIyNjAsImV4cCI6MTc5MDg2MzE2MH0.BWiDI7uqK99kySlKtVKgy4ZRwTWaKnkQKIJ32b-CAHo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/folder-project/get-all",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "folder-project",
+            "get-all"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get detail folder",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/folder-project/get/8400532d-c70a-40d8-b4bc-e11729377ed8",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "folder-project",
+            "get",
+            "8400532d-c70a-40d8-b4bc-e11729377ed8"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "update folder",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"Project Pemetaan Papua (Update)\",\r\n    \"detail\": \"Folder untuk menyimpan layer GIS Sumatra\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/folder-project/update/8400532d-c70a-40d8-b4bc-e11729377ed8",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "folder-project",
+            "update",
+            "8400532d-c70a-40d8-b4bc-e11729377ed8"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create project inside folder",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Proyek Jalan Deli Serdang\",\r\n  \"detail\": \"Kanvas proyek pembangunan jalan di Deli Serdang\",\r\n  \"uuid_folder\": \"015f1902-426e-4706-b8b6-b4c0cea973c6\",\r\n  \"kode_provinsi\": \"12\",\r\n  \"kode_kabupaten\": \"12.09\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/project-geo/create",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "project-geo",
+            "create"
           ]
         }
       },

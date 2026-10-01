@@ -1,0 +1,19 @@
+$kind: http-request
+name: get all provinsi
+description: ""
+url: http://localhost:8000/api/v1/gis/point/get-all?search=&page=1&size=10
+method: POST
+queryParams:
+  search: ""
+  page: "1"
+  size: "10"
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"Folder Project Sumatera\",\r
+
+    \    \"detail\": \"Folder Project Sumatera Detail\"\r
+
+    }"
+order: 3012742739514072

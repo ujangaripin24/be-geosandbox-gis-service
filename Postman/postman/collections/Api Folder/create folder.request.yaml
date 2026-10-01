@@ -1,0 +1,14 @@
+$kind: http-request
+description: ""
+url: http://localhost:8000/api/v1/gis/folder-project/create
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"Folder Project Sumatera\",\r
+
+    \    \"detail\": \"Folder Project Sumatera Detail\"\r
+
+    }"
+order: 1790861657365
