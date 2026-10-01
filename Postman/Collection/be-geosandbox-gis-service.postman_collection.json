@@ -165,7 +165,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/v1/gis/selected-area/kecamatan/72",
+          "raw": "http://localhost:8000/api/v1/gis/selected-area/kecamatan/12",
           "protocol": "http",
           "host": [
             "localhost"
@@ -177,7 +177,7 @@
             "gis",
             "selected-area",
             "kecamatan",
-            "72"
+            "12"
           ]
         }
       },
@@ -626,6 +626,166 @@
             "gis",
             "project-geo",
             "create"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get project-geo",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"jej0f8vako@ruutukf.com\",\n    \"password\": \"123456789\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/project-geo/get-all",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "project-geo",
+            "get-all"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get project-geo all",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"jej0f8vako@ruutukf.com\",\n    \"password\": \"123456789\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/project-geo/get-all",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "project-geo",
+            "get-all"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create geometry project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"uuid_project_geo\": \"69f098c9-1bfb-43aa-aa3f-e3a427ffca1a\",\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"properties\": {\n        \"name\": \"Titik Sensor Flood\",\n        \"detail\": \"Lokasi sensor banjir\"\n      },\n      \"geometry\": {\n        \"type\": \"LineString\",\n        \"coordinates\": [\n          [\n            99.6287932,\n            2.986033\n          ],\n          [\n            99.6305957,\n            2.9845437\n          ],\n          [\n            99.63169,\n            2.983258\n          ],\n          [\n            99.6333101,\n            2.9813616\n          ],\n          [\n            99.6344795,\n            2.9796258\n          ]\n        ]\n      }\n    }\n  ]\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/geometry-project/add",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "geometry-project",
+            "add"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get all geometry project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/v1/gis/geometry-project/project/69f098c9-1bfb-43aa-aa3f-e3a427ffca1a",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "v1",
+            "gis",
+            "geometry-project",
+            "project",
+            "69f098c9-1bfb-43aa-aa3f-e3a427ffca1a"
           ]
         }
       },
