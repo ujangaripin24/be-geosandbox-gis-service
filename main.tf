@@ -11,8 +11,8 @@ provider "docker" {
   host = "unix:///var/run/docker.sock"
 }
 
-# 1. Definisi Network (Menggunakan network yang sudah ada / external)
-resource "docker_network" "local_network" {
+# 1. GUNAKAN DATA SOURCE (Bukan resource) untuk membaca network yang sudah ada
+data "docker_network" "local_network" {
   name = "global-network-geosandbox"
 }
 
@@ -33,14 +33,14 @@ resource "docker_container" "app" {
   name    = "gis_service_app"
   image   = docker_image.app_image.image_id
   restart = "always"
-  command = ["npm", "run dev"]
+  command = ["npm", "run", "dev"] # Perbaikan syntax command string array
 
   # Batasan RAM (Memory limit 512MB dalam satuan Bytes)
-  # 512 * 1024 * 1024 = 536870912
   memory = 536870912
 
   networks_advanced {
-    name = docker_network.local_network.name
+    # Mengacu pada data source di atas
+    name = data.docker_network.local_network.name
   }
 
   # Sinkronisasi port sesuai Compose (3620:3620)
