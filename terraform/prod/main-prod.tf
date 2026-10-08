@@ -16,9 +16,21 @@ data "docker_network" "local_network" {
 }
 
 resource "docker_image" "app_image" {
-  name = "be-geosandbox-gis-service:latest"
+  name         = "be-geosandbox-gis-service:latest"
+  keep_locally = true
+
+  triggers = {
+    dir_sha1 = sha1(join("", [
+      for f in sort(setunion(
+        fileset("${path.module}/../..", "src/**"),
+        fileset("${path.module}/../..", "package*.json"),
+        fileset("${path.module}/../..", "Dockerfile")
+      )) : filesha1("${path.module}/../../${f}")
+    ]))
+  }
+
   build {
-    context    = "."
+    context    = abspath("${path.module}/../..")
     dockerfile = "Dockerfile"
     build_arg = {
       NODE_VERSION = "24.16.0"
@@ -30,29 +42,17 @@ resource "docker_container" "app" {
   name    = "gis_service_app"
   image   = docker_image.app_image.image_id
   restart = "always"
-  command = ["npm", "run", "dev"]
-  memory  = 536870912
+  command = ["npm", "start"]
+
+  # 512 * 1024 * 1024 = 536870912
+  memory = 536870912
 
   networks_advanced {
     name = data.docker_network.local_network.name
   }
 
-  ports {
-    internal = 3620
-    external = 3620
-  }
-
-  volumes {
-    host_path      = abspath(path.module)
-    container_path = "/usr/src/app"
-  }
-
-  volumes {
-    container_path = "/usr/src/app/node_modules"
-  }
-
   env = [
-    for line in compact(split("\n", file("${path.module}/.env"))) : line
+    for line in compact(split("\n", fileexists("${path.module}/.env") ? file("${path.module}/.env") : "")) : line
     if !startswith(line, "#") && length(split("=", line)) > 1
   ]
 }
