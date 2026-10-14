@@ -23,7 +23,6 @@ const handleValidation = (req, res, next) => {
   next();
 };
 
-// CREATE
 router.post(
   ["/gis/multi-geom/create", "/gis/multi-geom/add", "/gis/multi-geom"],
   authenticateTokenGuard,
@@ -32,19 +31,16 @@ router.post(
   CreateMultiGeomController,
 );
 
-// READ ALL (GeoJSON FeatureCollection)
 router.get(
   ["/gis/multi-geom/get-all", "/gis/multi-geom/all", "/gis/multi-geom"],
   GetAllMultiGeomController,
 );
 
-// READ DETAIL (GeoJSON Feature)
 router.get(
   ["/gis/multi-geom/get/:uuid", "/gis/multi-geom/:uuid"],
   GetDetailMultiGeomController,
 );
 
-// UPDATE
 router.put(
   ["/gis/multi-geom/update/:uuid", "/gis/multi-geom/:uuid"],
   authenticateTokenGuard,
@@ -53,7 +49,6 @@ router.put(
   UpdateMultiGeomController,
 );
 
-// DELETE
 router.delete(
   ["/gis/multi-geom/delete/:uuid", "/gis/multi-geom/:uuid"],
   authenticateTokenGuard,

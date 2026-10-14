@@ -29,7 +29,6 @@ const CreateMultiGeomValidation = [
     .isString()
     .withMessage("Detail harus berupa string"),
   body().custom((value, { req }) => {
-    // 1. Format GeoJSON FeatureCollection
     if (req.body.type === "FeatureCollection") {
       if (!Array.isArray(req.body.features) || req.body.features.length === 0) {
         throw new Error(
@@ -47,7 +46,6 @@ const CreateMultiGeomValidation = [
       return true;
     }
 
-    // 2. Format GeoJSON Feature
     if (req.body.type === "Feature") {
       if (!isValidGeometry(req.body.geometry)) {
         throw new Error(
@@ -57,7 +55,6 @@ const CreateMultiGeomValidation = [
       return true;
     }
 
-    // 3. Format Objek Langsung { name, detail, geometry }
     const geom = req.body.geometry;
     if (!geom) {
       throw new Error("Objek geometry wajib disertakan");

@@ -1,8 +1,5 @@
 const { sequelize } = require("../models");
 
-/**
- * Format baris query database menjadi GeoJSON Feature
- */
 const toGeoJsonFeature = (row) => {
   const geometry =
     typeof row.geom_json === "string"
@@ -30,10 +27,6 @@ const toGeoJsonFeature = (row) => {
   };
 };
 
-/**
- * CREATE Multi Geometry
- * Mendukung single feature, direct geometry, maupun FeatureCollection dari Mapbox Draw
- */
 const CreateMultiGeomService = async ({
   uuid_user,
   name,
@@ -156,9 +149,6 @@ const CreateMultiGeomService = async ({
   }
 };
 
-/**
- * GET ALL Multi Geometries (FeatureCollection)
- */
 const GetAllMultiGeomService = async ({ uuid_user } = {}) => {
   let whereClause = "";
   const replacements = {};
@@ -194,9 +184,6 @@ const GetAllMultiGeomService = async ({ uuid_user } = {}) => {
   };
 };
 
-/**
- * GET DETAIL Multi Geometry By UUID (Feature)
- */
 const GetDetailMultiGeomService = async (uuid) => {
   const [rows] = await sequelize.query(
     `SELECT 
@@ -225,9 +212,6 @@ const GetDetailMultiGeomService = async (uuid) => {
   return toGeoJsonFeature(rows[0]);
 };
 
-/**
- * UPDATE Multi Geometry
- */
 const UpdateMultiGeomService = async (
   uuid,
   { name, detail, geometry, properties },
@@ -247,7 +231,9 @@ const UpdateMultiGeomService = async (
   const existing = existingRows[0];
 
   if (uuid_user && existing.uuid_user !== uuid_user) {
-    throw new Error("Anda tidak memiliki akses untuk mengubah multi geometry ini");
+    throw new Error(
+      "Anda tidak memiliki akses untuk mengubah multi geometry ini",
+    );
   }
 
   const finalName = name !== undefined ? name : properties?.name;
@@ -284,9 +270,6 @@ const UpdateMultiGeomService = async (
   return await GetDetailMultiGeomService(uuid);
 };
 
-/**
- * DELETE Multi Geometry
- */
 const DeleteMultiGeomService = async (uuid, uuid_user) => {
   const [existingRows] = await sequelize.query(
     `SELECT uuid, uuid_user FROM tbl_multi_geom WHERE uuid = :uuid LIMIT 1;`,
@@ -302,7 +285,9 @@ const DeleteMultiGeomService = async (uuid, uuid_user) => {
   const existing = existingRows[0];
 
   if (uuid_user && existing.uuid_user !== uuid_user) {
-    throw new Error("Anda tidak memiliki akses untuk menghapus multi geometry ini");
+    throw new Error(
+      "Anda tidak memiliki akses untuk menghapus multi geometry ini",
+    );
   }
 
   await sequelize.query(`DELETE FROM tbl_multi_geom WHERE uuid = :uuid;`, {
