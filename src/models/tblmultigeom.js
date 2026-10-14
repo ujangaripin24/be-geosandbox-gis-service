@@ -1,14 +1,9 @@
 "use strict";
 const { Model } = require("sequelize");
+
 module.exports = (sequelize, DataTypes) => {
   class TblMultiGeom extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
       TblMultiGeom.belongsTo(models.DetailUsers, {
         foreignKey: "uuid_user",
         targetKey: "uuid",
@@ -16,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
+
   TblMultiGeom.init(
     {
       uuid: {
@@ -25,16 +21,16 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       name: {
-        type: DataTypes.STRING(30),
-        allowNull: false,
+        type: DataTypes.STRING(255),
+        allowNull: true,
       },
       detail: {
-        type: DataTypes.STRING(100),
+        type: DataTypes.TEXT,
         allowNull: true,
       },
       uuid_user: {
         type: DataTypes.UUID,
-        allowNull: true,
+        allowNull: false,
         references: {
           model: "tbl_users",
           key: "uuid",
@@ -50,7 +46,10 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "TblMultiGeom",
+      tableName: "tbl_multi_geom",
+      timestamps: true,
     },
   );
+
   return TblMultiGeom;
 };
