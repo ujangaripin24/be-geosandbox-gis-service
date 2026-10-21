@@ -30,14 +30,20 @@ const checkProjectGeoOwnership = async (req, res, next) => {
       return res
         .status(403)
         .json(
-          formatError("Anda tidak memiliki akses untuk project geo ini", "forbidden")
+          formatError(
+            "Anda tidak memiliki akses untuk project geo ini",
+            "forbidden",
+          ),
         );
     }
 
     req.projectGeo = project;
     next();
   } catch (error) {
-    console.error("Error in checkProjectGeoOwnership middleware:", error.message);
+    console.error(
+      "Error in checkProjectGeoOwnership middleware:",
+      error.message,
+    );
     return res
       .status(500)
       .json(formatError("Terjadi kesalahan pada server", "server"));
