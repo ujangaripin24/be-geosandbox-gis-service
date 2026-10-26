@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const { validationResult } = require("express-validator");
 const { authenticateTokenGuard } = require("../middlewares/auth.middleware");
 const {
@@ -13,9 +14,14 @@ const {
   DirectionOSRMController,
   DirectionOSRMTwoWayPointController,
   DirectionOSRMMultipleWayPointController,
+  UploadCSVFilePointController,
 } = require("../controller/point-places.controller");
 
 const router = express.Router();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // Maksimal 10MB
+});
 
 router.post(
   "/gis/point/add",
@@ -32,12 +38,19 @@ router.post(
   CreatePlaceController,
 );
 
+router.post(
+  "/gis/point/upload-csv",
+  authenticateTokenGuard,
+  upload.single("file"),
+  UploadCSVFilePointController,
+);
+
 router.get("/gis/point/get-all", GetAllPlaceController);
 router.put(
   "/gis/point/update/:uuid",
   authenticateTokenGuard,
   UpdatePlaceValidation,
-  (res, req, next) => {
+  (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -55,3 +68,4 @@ router.get("/gis/point/direction-multiple-point", DirectionOSRMMultipleWayPointC
 router.post("/gis/point/direction-multiple-point", DirectionOSRMMultipleWayPointController);
 
 module.exports = router;
+

@@ -8,6 +8,7 @@ const {
   DirectionOSRMBackendService,
   DirectionOSRMTwoWayPointService,
   DirectionOSRMMultipleWayPointService,
+  UploadCSVFilePointService,
 } = require("../service/point-places.service");
 
 const CreatePlaceController = async (req, res, next) => {
@@ -199,6 +200,32 @@ const DirectionOSRMMultipleWayPointController = async (req, res) => {
   }
 };
 
+const UploadCSVFilePointController = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json(formatError("File CSV wajib diunggah", "file"));
+    }
+
+    const uuid_user = req.user ? req.user.uuid : null;
+    const result = await UploadCSVFilePointService(req.file, { uuid_user });
+
+    return res.status(200).json({
+      message: "Proses unggah dan impor file CSV titik lokasi selesai",
+      status: 200,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error in UploadCSVFilePointController:", error.message);
+    if (
+      error.message.includes("File CSV tidak valid") ||
+      error.message.includes("File CSV kosong")
+    ) {
+      return res.status(400).json(formatError(error.message, "file"));
+    }
+    return res.status(500).json(formatError(error.message, "server"));
+  }
+};
+
 module.exports = {
   CreatePlaceController,
   GetAllPlaceController,
@@ -207,4 +234,5 @@ module.exports = {
   DirectionOSRMController,
   DirectionOSRMTwoWayPointController,
   DirectionOSRMMultipleWayPointController,
+  UploadCSVFilePointController,
 };

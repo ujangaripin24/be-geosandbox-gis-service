@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const { toGeoJSONFeature } = require("../validation/kabupaten.validation");
 const { sequelize, TblPointPlace } = require("../models");
 const dotenv = require("dotenv");
+const { normalizeName, parseCSV } = require("../validation/point-places.validation");
 dotenv.config();
 
 const osrmBaseUrl = process.env.OSRM_URL_API;
@@ -131,6 +132,267 @@ const AddPlaceService = async (data) => {
   }
 
   return placeData;
+};
+
+const UploadCSVFilePointService = async (fileInput, { uuid_user = null } = {}) => {
+  let content = null;
+  if (fileInput && fileInput.buffer) {
+    content = fileInput.buffer;
+  } else if (Buffer.isBuffer(fileInput) || typeof fileInput === "string") {
+    content = fileInput;
+  } else {
+    throw new Error("File CSV tidak valid atau tidak ditemukan");
+  }
+
+  const rows = parseCSV(content);
+  if (rows.length === 0) {
+    throw new Error("File CSV kosong atau format header tidak sesuai");
+  }
+
+  const results = {
+    total_rows: rows.length,
+    inserted_count: 0,
+    duplicate_count: 0,
+    error_count: 0,
+    inserted_places: [],
+    duplicates: [],
+    errors: [],
+  };
+
+  const seenInBatchNames = new Set();
+  const seenInBatchCoords = new Set();
+
+  for (const item of rows) {
+    const { rowNumber, data } = item;
+
+    const rawName = data.name_place || data.nama_tempat || data.name || data.place_name || "";
+    const rawKodeKab = data.kode_kabupaten || data.kabupaten || data.kode_kab || "";
+    const rawLon = data.longitude || data.long || data.lng || data.lon || "";
+    const rawLat = data.latitude || data.lat || "";
+    const description = data.description || data.deskripsi || null;
+
+    const normalizedName = normalizeName(rawName);
+    const kode_kabupaten = String(rawKodeKab).trim();
+    const lon = parseFloat(rawLon);
+    const lat = parseFloat(rawLat);
+
+    if (!normalizedName) {
+      results.error_count++;
+      results.errors.push({
+        row: rowNumber,
+        name_place: rawName,
+        reason: "Kolom 'name_place' tidak boleh kosong",
+      });
+      continue;
+    }
+
+    if (!kode_kabupaten) {
+      results.error_count++;
+      results.errors.push({
+        row: rowNumber,
+        name_place: normalizedName,
+        reason: "Kolom 'kode_kabupaten' tidak boleh kosong",
+      });
+      continue;
+    }
+
+    if (isNaN(lon) || isNaN(lat)) {
+      results.error_count++;
+      results.errors.push({
+        row: rowNumber,
+        name_place: normalizedName,
+        reason: "Koordinat longitude dan latitude harus berupa angka desimal yang valid",
+      });
+      continue;
+    }
+
+    const batchNameKey = `${normalizedName.toLowerCase()}__${kode_kabupaten}`;
+    const batchCoordKey = `${lon.toFixed(6)}__${lat.toFixed(6)}`;
+
+    if (seenInBatchNames.has(batchNameKey)) {
+      results.duplicate_count++;
+      results.duplicates.push({
+        row: rowNumber,
+        name_place: rawName,
+        normalized_name: normalizedName,
+        kode_kabupaten,
+        reason: `Duplikat dalam file CSV: Tempat '${normalizedName}' di kabupaten '${kode_kabupaten}' sudah terdaftar pada baris sebelumnya`,
+      });
+      continue;
+    }
+
+    if (seenInBatchCoords.has(batchCoordKey)) {
+      results.duplicate_count++;
+      results.duplicates.push({
+        row: rowNumber,
+        name_place: rawName,
+        normalized_name: normalizedName,
+        kode_kabupaten,
+        reason: `Duplikat dalam file CSV: Titik koordinat (${lat}, ${lon}) sudah digunakan pada baris sebelumnya`,
+      });
+      continue;
+    }
+
+    const [existingByName] = await sequelize.query(
+      `SELECT uuid, name_place, kode_kabupaten 
+       FROM tbl_geo_point_place 
+       WHERE LOWER(TRIM(name_place)) = LOWER(TRIM(:name_place)) 
+         AND kode_kabupaten = :kode_kabupaten 
+       LIMIT 1;`,
+      {
+        replacements: { name_place: normalizedName, kode_kabupaten },
+      },
+    );
+
+    if (existingByName && existingByName.length > 0) {
+      results.duplicate_count++;
+      results.duplicates.push({
+        row: rowNumber,
+        name_place: rawName,
+        normalized_name: normalizedName,
+        kode_kabupaten,
+        existing_uuid: existingByName[0].uuid,
+        reason: `Data tempat '${existingByName[0].name_place}' sudah ada di database untuk kabupaten '${kode_kabupaten}'`,
+      });
+      seenInBatchNames.add(batchNameKey);
+      continue;
+    }
+
+    const [existingByGeom] = await sequelize.query(
+      `SELECT uuid, name_place 
+       FROM tbl_geo_point_place 
+       WHERE ST_Equals(geom, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)) 
+       LIMIT 1;`,
+      {
+        replacements: { lon, lat },
+      },
+    );
+
+    if (existingByGeom && existingByGeom.length > 0) {
+      results.duplicate_count++;
+      results.duplicates.push({
+        row: rowNumber,
+        name_place: rawName,
+        normalized_name: normalizedName,
+        kode_kabupaten,
+        existing_uuid: existingByGeom[0].uuid,
+        reason: `Data tempat di titik koordinat (${lat}, ${lon}) sudah ada di database dengan nama '${existingByGeom[0].name_place}'`,
+      });
+      seenInBatchCoords.add(batchCoordKey);
+      continue;
+    }
+
+    const [wilayahRows] = await sequelize.query(
+      `SELECT 
+          wilayah.kode_provinsi,
+          wilayah.nama_provinsi,
+          wilayah.kode_kabupaten,
+          wilayah.nama_kabupaten,
+          ST_Contains(
+            wilayah.geom, 
+            ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)
+          ) AS is_inside
+       FROM tbl_geo_wilayah AS wilayah
+       WHERE wilayah.kode_kabupaten = :kode_kabupaten
+       LIMIT 1;`,
+      {
+        replacements: { kode_kabupaten, lon, lat },
+      },
+    );
+
+    if (!wilayahRows || wilayahRows.length === 0) {
+      results.error_count++;
+      results.errors.push({
+        row: rowNumber,
+        name_place: normalizedName,
+        kode_kabupaten,
+        reason: `Data wilayah dengan kode kabupaten '${kode_kabupaten}' tidak ditemukan`,
+      });
+      continue;
+    }
+
+    const { kode_provinsi, nama_provinsi, nama_kabupaten, is_inside } = wilayahRows[0];
+
+    if (!is_inside) {
+      results.error_count++;
+      results.errors.push({
+        row: rowNumber,
+        name_place: normalizedName,
+        kode_kabupaten,
+        reason: `Titik koordinat (${lat}, ${lon}) berada di luar batas wilayah administratif ${nama_kabupaten} (${nama_provinsi})`,
+      });
+      continue;
+    }
+
+    const finalNamePlace = normalizedName.length > 30 ? normalizedName.substring(0, 30) : normalizedName;
+
+    try {
+      const [insertedRows] = await sequelize.query(
+        `INSERT INTO tbl_geo_point_place (
+            uuid,
+            name_place,
+            description,
+            kode_provinsi,
+            nama_provinsi,
+            kode_kabupaten,
+            nama_kabupaten,
+            uuid_user,
+            geom,
+            "createdAt",
+            "updatedAt"
+         ) VALUES (
+            gen_random_uuid(),
+            :name_place,
+            :description,
+            :kode_provinsi,
+            :nama_provinsi,
+            :kode_kabupaten,
+            :nama_kabupaten,
+            :uuid_user,
+            ST_SetSRID(ST_MakePoint(:lon, :lat), 4326),
+            NOW(),
+            NOW()
+         )
+         RETURNING uuid, name_place, kode_kabupaten, nama_kabupaten, ST_AsGeoJSON(geom) AS geom;`,
+        {
+          replacements: {
+            name_place: finalNamePlace,
+            description,
+            kode_provinsi,
+            nama_provinsi,
+            kode_kabupaten,
+            nama_kabupaten,
+            uuid_user: uuid_user || null,
+            lon,
+            lat,
+          },
+        },
+      );
+
+      seenInBatchNames.add(batchNameKey);
+      seenInBatchCoords.add(batchCoordKey);
+
+      results.inserted_count++;
+      results.inserted_places.push({
+        row: rowNumber,
+        uuid: insertedRows[0].uuid,
+        name_place: insertedRows[0].name_place,
+        kode_kabupaten: insertedRows[0].kode_kabupaten,
+        nama_kabupaten: insertedRows[0].nama_kabupaten,
+        latitude: lat,
+        longitude: lon,
+      });
+    } catch (insertErr) {
+      results.error_count++;
+      results.errors.push({
+        row: rowNumber,
+        name_place: finalNamePlace,
+        reason: insertErr.message,
+      });
+    }
+  }
+
+  return results;
 };
 
 const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
@@ -328,16 +590,12 @@ const SeacrhByNominatimService = async ({
 };
 
 const DirectionOSRMBackendService = async (options = {}) => {
-  // Hardcoded default coordinates if not supplied:
-  // Start Point (Banda Aceh): lat 5.5400, lon 95.3300
-  // End Point (Bandar Lampung): lat -5.4300, lon 105.2600
   let startLat = options.startLat !== undefined && options.startLat !== "" ? parseFloat(options.startLat) : 5.5400;
   let startLon = options.startLon !== undefined && options.startLon !== "" ? parseFloat(options.startLon) : 95.3300;
   let endLat = options.endLat !== undefined && options.endLat !== "" ? parseFloat(options.endLat) : -5.4300;
   let endLon = options.endLon !== undefined && options.endLon !== "" ? parseFloat(options.endLon) : 105.2600;
   let profile = options.profile || "driving";
 
-  // OSRM API expects longitude,latitude;longitude,latitude
   let coordinates = `${startLon},${startLat};${endLon},${endLat}`;
   let url = `${osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
 
@@ -517,4 +775,5 @@ module.exports = {
   DirectionOSRMBackendService,
   DirectionOSRMTwoWayPointService,
   DirectionOSRMMultipleWayPointService,
+  UploadCSVFilePointService,
 };
