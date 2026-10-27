@@ -2,7 +2,10 @@ const { Op } = require("sequelize");
 const { toGeoJSONFeature } = require("../validation/kabupaten.validation");
 const { sequelize, TblPointPlace } = require("../models");
 const dotenv = require("dotenv");
-const { normalizeName, parseCSV } = require("../validation/point-places.validation");
+const {
+  normalizeName,
+  parseCSV,
+} = require("../validation/point-places.validation");
 dotenv.config();
 
 const osrmBaseUrl = process.env.OSRM_URL_API;
@@ -134,7 +137,10 @@ const AddPlaceService = async (data) => {
   return placeData;
 };
 
-const UploadCSVFilePointService = async (fileInput, { uuid_user = null } = {}) => {
+const UploadCSVFilePointService = async (
+  fileInput,
+  { uuid_user = null } = {},
+) => {
   let content = null;
   if (fileInput && fileInput.buffer) {
     content = fileInput.buffer;
@@ -143,6 +149,8 @@ const UploadCSVFilePointService = async (fileInput, { uuid_user = null } = {}) =
   } else {
     throw new Error("File CSV tidak valid atau tidak ditemukan");
   }
+
+  console.log("[point-place.service] dari uuid", uuid_user);
 
   const rows = parseCSV(content);
   if (rows.length === 0) {
@@ -165,8 +173,10 @@ const UploadCSVFilePointService = async (fileInput, { uuid_user = null } = {}) =
   for (const item of rows) {
     const { rowNumber, data } = item;
 
-    const rawName = data.name_place || data.nama_tempat || data.name || data.place_name || "";
-    const rawKodeKab = data.kode_kabupaten || data.kabupaten || data.kode_kab || "";
+    const rawName =
+      data.name_place || data.nama_tempat || data.name || data.place_name || "";
+    const rawKodeKab =
+      data.kode_kabupaten || data.kabupaten || data.kode_kab || "";
     const rawLon = data.longitude || data.long || data.lng || data.lon || "";
     const rawLat = data.latitude || data.lat || "";
     const description = data.description || data.deskripsi || null;
@@ -201,7 +211,8 @@ const UploadCSVFilePointService = async (fileInput, { uuid_user = null } = {}) =
       results.errors.push({
         row: rowNumber,
         name_place: normalizedName,
-        reason: "Koordinat longitude dan latitude harus berupa angka desimal yang valid",
+        reason:
+          "Koordinat longitude dan latitude harus berupa angka desimal yang valid",
       });
       continue;
     }
@@ -311,7 +322,8 @@ const UploadCSVFilePointService = async (fileInput, { uuid_user = null } = {}) =
       continue;
     }
 
-    const { kode_provinsi, nama_provinsi, nama_kabupaten, is_inside } = wilayahRows[0];
+    const { kode_provinsi, nama_provinsi, nama_kabupaten, is_inside } =
+      wilayahRows[0];
 
     if (!is_inside) {
       results.error_count++;
@@ -324,7 +336,10 @@ const UploadCSVFilePointService = async (fileInput, { uuid_user = null } = {}) =
       continue;
     }
 
-    const finalNamePlace = normalizedName.length > 30 ? normalizedName.substring(0, 30) : normalizedName;
+    const finalNamePlace =
+      normalizedName.length > 30
+        ? normalizedName.substring(0, 30)
+        : normalizedName;
 
     try {
       const [insertedRows] = await sequelize.query(
@@ -400,8 +415,8 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
   let offset = (page - 1) * limit;
   let where = search
     ? {
-      [Op.or]: [{ name_place: { [Op.like]: `%${search}%` } }],
-    }
+        [Op.or]: [{ name_place: { [Op.like]: `%${search}%` } }],
+      }
     : {};
 
   let { rows, count } = await TblPointPlace.findAndCountAll({
@@ -577,10 +592,7 @@ const SeacrhByNominatimService = async ({
     let result = await response.json();
     return result;
   } catch (err) {
-    if (
-      err.message.includes("fetch failed") ||
-      err.code === "ECONNREFUSED"
-    ) {
+    if (err.message.includes("fetch failed") || err.code === "ECONNREFUSED") {
       throw new Error(
         `Gagal terhubung ke Nominatim (${nominatimBaseUrl}). Container 'global-nominatim-search' sedang melakukan inisialisasi/import data OSM atau belum siap menerima request.`,
       );
@@ -590,10 +602,22 @@ const SeacrhByNominatimService = async ({
 };
 
 const DirectionOSRMBackendService = async (options = {}) => {
-  let startLat = options.startLat !== undefined && options.startLat !== "" ? parseFloat(options.startLat) : 5.5400;
-  let startLon = options.startLon !== undefined && options.startLon !== "" ? parseFloat(options.startLon) : 95.3300;
-  let endLat = options.endLat !== undefined && options.endLat !== "" ? parseFloat(options.endLat) : -5.4300;
-  let endLon = options.endLon !== undefined && options.endLon !== "" ? parseFloat(options.endLon) : 105.2600;
+  let startLat =
+    options.startLat !== undefined && options.startLat !== ""
+      ? parseFloat(options.startLat)
+      : 5.54;
+  let startLon =
+    options.startLon !== undefined && options.startLon !== ""
+      ? parseFloat(options.startLon)
+      : 95.33;
+  let endLat =
+    options.endLat !== undefined && options.endLat !== ""
+      ? parseFloat(options.endLat)
+      : -5.43;
+  let endLon =
+    options.endLon !== undefined && options.endLon !== ""
+      ? parseFloat(options.endLon)
+      : 105.26;
   let profile = options.profile || "driving";
 
   let coordinates = `${startLon},${startLat};${endLon},${endLat}`;
@@ -609,19 +633,16 @@ const DirectionOSRMBackendService = async (options = {}) => {
 
     if (!response.ok) {
       throw new Error(
-        `Gagal mengambil data rute dari OSRM: [${response.status}] ${response.statusText}`
+        `Gagal mengambil data rute dari OSRM: [${response.status}] ${response.statusText}`,
       );
     }
 
     let result = await response.json();
     return result;
   } catch (err) {
-    if (
-      err.message.includes("fetch failed") ||
-      err.code === "ECONNREFUSED"
-    ) {
+    if (err.message.includes("fetch failed") || err.code === "ECONNREFUSED") {
       throw new Error(
-        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`
+        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`,
       );
     }
     throw err;
@@ -641,17 +662,41 @@ const DirectionOSRMTwoWayPointService = async (data = {}) => {
     profile = "driving",
   } = data;
 
-  let lat1 = start_lat !== undefined && start_lat !== "" ? parseFloat(start_lat) : (startLat !== undefined && startLat !== "" ? parseFloat(startLat) : null);
-  let lon1 = start_lon !== undefined && start_lon !== "" ? parseFloat(start_lon) : (startLon !== undefined && startLon !== "" ? parseFloat(startLon) : null);
-  let lat2 = end_lat !== undefined && end_lat !== "" ? parseFloat(end_lat) : (endLat !== undefined && endLat !== "" ? parseFloat(endLat) : null);
-  let lon2 = end_lon !== undefined && end_lon !== "" ? parseFloat(end_lon) : (endLon !== undefined && endLon !== "" ? parseFloat(endLon) : null);
+  let lat1 =
+    start_lat !== undefined && start_lat !== ""
+      ? parseFloat(start_lat)
+      : startLat !== undefined && startLat !== ""
+        ? parseFloat(startLat)
+        : null;
+  let lon1 =
+    start_lon !== undefined && start_lon !== ""
+      ? parseFloat(start_lon)
+      : startLon !== undefined && startLon !== ""
+        ? parseFloat(startLon)
+        : null;
+  let lat2 =
+    end_lat !== undefined && end_lat !== ""
+      ? parseFloat(end_lat)
+      : endLat !== undefined && endLat !== ""
+        ? parseFloat(endLat)
+        : null;
+  let lon2 =
+    end_lon !== undefined && end_lon !== ""
+      ? parseFloat(end_lon)
+      : endLon !== undefined && endLon !== ""
+        ? parseFloat(endLon)
+        : null;
 
   if (lat1 === null || isNaN(lat1) || lon1 === null || isNaN(lon1)) {
-    throw new Error("Koordinat titik asal (start_lat & start_lon) wajib diisi dengan angka valid");
+    throw new Error(
+      "Koordinat titik asal (start_lat & start_lon) wajib diisi dengan angka valid",
+    );
   }
 
   if (lat2 === null || isNaN(lat2) || lon2 === null || isNaN(lon2)) {
-    throw new Error("Koordinat titik tujuan (end_lat & end_lon) wajib diisi dengan angka valid");
+    throw new Error(
+      "Koordinat titik tujuan (end_lat & end_lon) wajib diisi dengan angka valid",
+    );
   }
 
   // OSRM API expects longitude,latitude;longitude,latitude
@@ -668,19 +713,16 @@ const DirectionOSRMTwoWayPointService = async (data = {}) => {
 
     if (!response.ok) {
       throw new Error(
-        `Gagal mengambil data rute dari OSRM: [${response.status}] ${response.statusText}`
+        `Gagal mengambil data rute dari OSRM: [${response.status}] ${response.statusText}`,
       );
     }
 
     let result = await response.json();
     return result;
   } catch (err) {
-    if (
-      err.message.includes("fetch failed") ||
-      err.code === "ECONNREFUSED"
-    ) {
+    if (err.message.includes("fetch failed") || err.code === "ECONNREFUSED") {
       throw new Error(
-        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`
+        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`,
       );
     }
     throw err;
@@ -698,15 +740,27 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
 
   if (Array.isArray(points)) {
     if (points.length < 2) {
-      throw new Error("Daftar titik lokasi 'points' harus berisi minimal 2 titik");
+      throw new Error(
+        "Daftar titik lokasi 'points' harus berisi minimal 2 titik",
+      );
     }
 
     let formattedPoints = [];
     points.forEach((pt, index) => {
       let lat, lon;
       if (typeof pt === "object" && pt !== null) {
-        lat = pt.lat !== undefined ? pt.lat : (pt.latitude !== undefined ? pt.latitude : null);
-        lon = pt.lon !== undefined ? pt.lon : (pt.longitude !== undefined ? pt.longitude : null);
+        lat =
+          pt.lat !== undefined
+            ? pt.lat
+            : pt.latitude !== undefined
+              ? pt.latitude
+              : null;
+        lon =
+          pt.lon !== undefined
+            ? pt.lon
+            : pt.longitude !== undefined
+              ? pt.longitude
+              : null;
       } else if (typeof pt === "string") {
         let parts = pt.split(",");
         if (parts.length === 2) {
@@ -719,7 +773,9 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
       let parsedLon = parseFloat(lon);
 
       if (isNaN(parsedLat) || isNaN(parsedLon)) {
-        throw new Error(`Titik lokasi pada indeks ${index} tidak valid (lat & lon wajib angka)`);
+        throw new Error(
+          `Titik lokasi pada indeks ${index} tidak valid (lat & lon wajib angka)`,
+        );
       }
 
       // OSRM API expects longitude,latitude
@@ -732,7 +788,9 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
   }
 
   if (!coordString || coordString.split(";").length < 2) {
-    throw new Error("Format 'points' tidak valid. Diperlukan minimal 2 titik lokasi.");
+    throw new Error(
+      "Format 'points' tidak valid. Diperlukan minimal 2 titik lokasi.",
+    );
   }
 
   let osrmBaseUrl = process.env.OSRM_URL;
@@ -748,19 +806,16 @@ const DirectionOSRMMultipleWayPointService = async (data = {}) => {
 
     if (!response.ok) {
       throw new Error(
-        `Gagal mengambil data rute multiple waypoint dari OSRM: [${response.status}] ${response.statusText}`
+        `Gagal mengambil data rute multiple waypoint dari OSRM: [${response.status}] ${response.statusText}`,
       );
     }
 
     let result = await response.json();
     return result;
   } catch (err) {
-    if (
-      err.message.includes("fetch failed") ||
-      err.code === "ECONNREFUSED"
-    ) {
+    if (err.message.includes("fetch failed") || err.code === "ECONNREFUSED") {
       throw new Error(
-        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`
+        `Gagal terhubung ke OSRM Backend (${osrmBaseUrl}). Pastikan container 'global-osrm-backend' sudah aktif.`,
       );
     }
     throw err;

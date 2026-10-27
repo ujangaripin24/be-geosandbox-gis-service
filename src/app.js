@@ -6,10 +6,13 @@ const helmet = require("helmet");
 const createError = require("http-errors");
 const messageBroker = require("./config/message-broker.config");
 const database = require("./config/database.config");
-const { listenUserUpdatedQueue } = require("./pkg/message-broker/user.subscriber");
+const {
+  listenUserUpdatedQueue,
+} = require("./pkg/message-broker/user.subscriber");
 // const fs = require("fs");
 // const path = require("path");
 const provinsiRouter = require("./routes/provinsi.routes");
+const dataCache = require("./config/data-cache.config");
 const kabupatenRouter = require("./routes/kabupaten.routes");
 const selectedAreaRouter = require("./routes/selected-area.routes");
 const pointPlacesRouter = require("./routes/point-places.routes");
@@ -52,6 +55,7 @@ app.listen(process.env.APP_PORT, async () => {
   console.log(`[SERVICE-GIS] Server berjalan di port ${process.env.APP_PORT}`);
   try {
     await database.authenticate();
+    await dataCache.connect();
     await messageBroker.connectRabbitMQ();
     await rustfsClient.connectionStorageS3();
     await listenUserUpdatedQueue();

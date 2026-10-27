@@ -136,7 +136,17 @@ const DirectionOSRMController = async (req, res) => {
 
 const DirectionOSRMTwoWayPointController = async (req, res) => {
   try {
-    const { start_lat, start_lon, end_lat, end_lon, startLat, startLon, endLat, endLon, profile } = req.query;
+    const {
+      start_lat,
+      start_lon,
+      end_lat,
+      end_lon,
+      startLat,
+      startLon,
+      endLat,
+      endLon,
+      profile,
+    } = req.query;
 
     const data = await DirectionOSRMTwoWayPointService({
       start_lat,
@@ -156,7 +166,10 @@ const DirectionOSRMTwoWayPointController = async (req, res) => {
       data,
     });
   } catch (error) {
-    console.error("Error in DirectionOSRMTwoWayPointController:", error.message);
+    console.error(
+      "Error in DirectionOSRMTwoWayPointController:",
+      error.message,
+    );
     if (error.message.includes("wajib diisi dengan angka valid")) {
       return res.status(400).json(formatError(error.message, "validation"));
     }
@@ -169,7 +182,10 @@ const DirectionOSRMMultipleWayPointController = async (req, res) => {
     let points = req.body?.points || req.query?.points;
     let profile = req.body?.profile || req.query?.profile;
 
-    if (typeof points === "string" && (points.startsWith("[") || points.startsWith("{"))) {
+    if (
+      typeof points === "string" &&
+      (points.startsWith("[") || points.startsWith("{"))
+    ) {
       try {
         points = JSON.parse(points);
       } catch (e) {
@@ -188,7 +204,10 @@ const DirectionOSRMMultipleWayPointController = async (req, res) => {
       data,
     });
   } catch (error) {
-    console.error("Error in DirectionOSRMMultipleWayPointController:", error.message);
+    console.error(
+      "Error in DirectionOSRMMultipleWayPointController:",
+      error.message,
+    );
     if (
       error.message.includes("wajib diisi") ||
       error.message.includes("minimal 2 titik") ||
@@ -203,10 +222,13 @@ const DirectionOSRMMultipleWayPointController = async (req, res) => {
 const UploadCSVFilePointController = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json(formatError("File CSV wajib diunggah", "file"));
+      return res
+        .status(400)
+        .json(formatError("File CSV wajib diunggah", "file"));
     }
 
     const uuid_user = req.user ? req.user.uuid : null;
+    console.log("[point-place.controller] uuid dari controller: ", uuid_user);
     const result = await UploadCSVFilePointService(req.file, { uuid_user });
 
     return res.status(200).json({
