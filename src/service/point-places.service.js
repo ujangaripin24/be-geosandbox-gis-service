@@ -7,6 +7,7 @@ const {
   parseCSV,
 } = require("../validation/point-places.validation");
 dotenv.config();
+const RedisClient = require("../config/data-cache.config");
 
 const osrmBaseUrl = process.env.OSRM_URL_API;
 const nominatimBaseUrl = process.env.NOMINATIM_URL_API;
@@ -413,6 +414,15 @@ const UploadCSVFilePointService = async (
 const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
   let limit = parseInt(size);
   let offset = (page - 1) * limit;
+
+  let redisKey = `cache:point-places:page:${page}:size:${size}:search:${search}`;
+
+  let cachedData = await RedisClient.get(redisKey);
+  if (cachedData) {
+    console.log("[Cache Hit] Mengambil data dari Redis");
+    return JSON.parse(cachedData);
+  }
+
   let where = search
     ? {
         [Op.or]: [{ name_place: { [Op.like]: `%${search}%` } }],
@@ -439,7 +449,7 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
   });
 
   let totalPages = Math.ceil(count / limit);
-  return {
+  let result = {
     type: "FeatureCollection",
     features: rows.map(toGeoJSONFeature),
     size: limit,
@@ -447,6 +457,11 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     totalPages,
     totalData: count,
   };
+
+  await RedisClient.set(redisKey, JSON.stringify(result), "EX", 300);
+  console.log("[Cache Set] Menyimpan data ke Redis");
+
+  return result;
 };
 
 const UpdatePlaceService = async (uuid, body) => {
