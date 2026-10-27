@@ -63,9 +63,17 @@ router.put(
 
 router.get("/gis/point/search-nominatim", SearchPlaceByNominatimController);
 router.get("/gis/point/direction-osrm", DirectionOSRMController);
-router.get("/gis/point/direction-two-point", DirectionOSRMTwoWayPointController);
-router.get("/gis/point/direction-multiple-point", DirectionOSRMMultipleWayPointController);
-router.post("/gis/point/direction-multiple-point", DirectionOSRMMultipleWayPointController);
+router.get(
+  "/gis/point/direction-two-point",
+  DirectionOSRMTwoWayPointController,
+);
+router.get(
+  "/gis/point/direction-multiple-point",
+  DirectionOSRMMultipleWayPointController,
+);
+router.post(
+  "/gis/point/direction-multiple-point",
+  DirectionOSRMMultipleWayPointController,
+);
 
 module.exports = router;
-
