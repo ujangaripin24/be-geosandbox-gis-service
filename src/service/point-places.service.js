@@ -414,18 +414,26 @@ const UploadCSVFilePointService = async (
 const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
   let limit = parseInt(size);
   let offset = (page - 1) * limit;
+  let cleanSearch = String(search).trim().toLowerCase();
 
-  let redisKey = `cache:point-places:page:${page}:size:${size}:search:${search}`;
+  let redisKey = `cache:point-places:page:${page}:size:${size}:search:${cleanSearch}`;
 
-  let cachedData = await RedisClient.get(redisKey);
-  if (cachedData) {
-    console.log("[Cache Hit] Mengambil data dari Redis");
-    return JSON.parse(cachedData);
+  try {
+    const cachedData = await RedisClient.get(redisKey);
+    if (cachedData) {
+      console.log("[Cache Hit] Mengambil data dari Redis:", redisKey);
+      return JSON.parse(cachedData);
+    }
+  } catch (cacheErr) {
+    console.warn(
+      "[Redis Warning] Gagal membaca cache, fallback ke DB:",
+      cacheErr.message,
+    );
   }
 
-  let where = search
+  let where = cleanSearch
     ? {
-        [Op.or]: [{ name_place: { [Op.like]: `%${search}%` } }],
+        [Op.or]: [{ name_place: { [Op.like]: `%${cleanSearch}%` } }],
       }
     : {};
 
@@ -458,8 +466,12 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     totalData: count,
   };
 
-  await RedisClient.set(redisKey, JSON.stringify(result), "EX", 300);
-  console.log("[Cache Set] Menyimpan data ke Redis");
+  try {
+    await RedisClient.set(redisKey, JSON.stringify(result), { EX: 300 });
+    console.log("[Cache Set] Menyimpan data ke Redis (TTL 5m):", redisKey);
+  } catch (cacheErr) {
+    console.warn("[Redis Warning] Gagal menyimpan cache:", cacheErr.message);
+  }
 
   return result;
 };
