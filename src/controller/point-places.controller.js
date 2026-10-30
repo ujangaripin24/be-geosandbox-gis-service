@@ -1,6 +1,9 @@
 const { validationResult } = require("express-validator");
 const { formatError } = require("../pkg/error-formatter.pkg");
 const {
+  deliverMessageData,
+} = require("../pkg/message-broker/message-broker.pkg");
+const {
   AddPlaceService,
   GetAllPlaceService,
   UpdatePlaceService,
@@ -28,6 +31,15 @@ const CreatePlaceController = async (req, res, next) => {
       uuid_user,
       email: req.user.email,
       username: req.user.username,
+    });
+
+    await deliverMessageData("point_places_queue", {
+      event_type: "NEW_PLACE_CREATED",
+      username: placeData.creatorUsername || req.user.username || "user",
+      name_place: placeData.name_place,
+      kabupaten: placeData.nama_kabupaten,
+      provinsi: placeData.nama_provinsi,
+      is_read: "unread",
     });
 
     return res.status(201).json({
