@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const { toGeoJSONFeature } = require("../validation/kabupaten.validation");
-const { sequelize, TblPointPlace } = require("../models");
+const { sequelize, TblPointPlace, DetailUsers } = require("../models");
 const dotenv = require("dotenv");
 const {
   normalizeName,
@@ -433,7 +433,14 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
 
   let where = cleanSearch
     ? {
-        [Op.or]: [{ name_place: { [Op.like]: `%${cleanSearch}%` } }],
+        [Op.or]: [
+          { name_place: { [Op.like]: `%${cleanSearch}%` } },
+          { description: { [Op.like]: `%${cleanSearch}%` } },
+          { kode_provinsi: { [Op.like]: `%${cleanSearch}%` } },
+          { nama_provinsi: { [Op.like]: `%${cleanSearch}%` } },
+          { kode_kabupaten: { [Op.like]: `%${cleanSearch}%` } },
+          { nama_kabupaten: { [Op.like]: `%${cleanSearch}%` } },
+        ],
       }
     : {};
 
@@ -446,7 +453,6 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
       "nama_provinsi",
       "kode_kabupaten",
       "nama_kabupaten",
-      "uuid_user",
       "geom",
       "createdAt",
       "updatedAt",
@@ -454,6 +460,13 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     where,
     limit,
     offset,
+    include: [
+      {
+        model: DetailUsers,
+        as: "user",
+        attributes: ["uuid", "email", "username"],
+      },
+    ],
   });
 
   let totalPages = Math.ceil(count / limit);

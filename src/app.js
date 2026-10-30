@@ -21,6 +21,7 @@ const projectGeoRouter = require("./routes/project-geo.routes");
 const geometryProjectRouter = require("./routes/geometry-project.routes");
 const multiGeomRouter = require("./routes/multi-geom.routes");
 const rustfsClient = require("./config/storage-s3.config");
+const { version } = require("../package.json");
 
 dotenv.config();
 
@@ -43,11 +44,12 @@ app.use("/api/v1", projectGeoRouter);
 app.use("/api/v1", geometryProjectRouter);
 app.use("/api/v1", multiGeomRouter);
 
-app.get("/", (req, res) => {
+app.get("/api/v1/gis/health", (req, res) => {
   res.status(200).json({
     status: 200,
+    versionApp: version,
     message: "[SERVICE-GIS] Server Berhasil Berjalan",
-    date: dateNow,
+    date: new Date().toISOString().replace("T", " ").substring(0, 19),
   });
 });
 

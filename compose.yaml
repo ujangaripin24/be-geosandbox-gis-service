@@ -18,8 +18,8 @@ services:
           memory: 512M # Batasi maksimal 512MB RAM
         reservations:
           memory: 256M # Alokasi awal 256MB RAM
-    ports:
-      - "3620:3620"
+    expose:
+      - "3620"
     networks:
       - global-network-geosandbox
 
