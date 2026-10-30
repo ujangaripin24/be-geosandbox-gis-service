@@ -26,6 +26,8 @@ const CreatePlaceController = async (req, res, next) => {
     const placeData = await AddPlaceService({
       ...body,
       uuid_user,
+      email: req.user.email,
+      username: req.user.username,
     });
 
     return res.status(201).json({

@@ -1,6 +1,9 @@
 const { Op } = require("sequelize");
 const { toGeoJSONFeature } = require("../validation/kabupaten.validation");
 const { sequelize, TblPointPlace, DetailUsers } = require("../models");
+const {
+  deliverMessageData,
+} = require("../pkg/message-broker/message-broker.pkg");
 const dotenv = require("dotenv");
 const {
   normalizeName,
@@ -21,6 +24,36 @@ const AddPlaceService = async (data) => {
     latitude,
     uuid_user,
   } = data;
+
+  let creatorUsername = data.username || "user";
+  if (uuid_user) {
+    let userRecord = await DetailUsers.findOne({
+      where: { uuid: uuid_user },
+      attributes: ["uuid", "username"],
+    });
+
+    if (!userRecord) {
+      try {
+        userRecord = await DetailUsers.create({
+          uuid: uuid_user,
+          username: data.username || "user",
+          email: data.email || `${uuid_user}@geosandbox.local`,
+        });
+        console.log(
+          `[gis-service] Auto-created missing DetailUsers for uuid: ${uuid_user}`,
+        );
+      } catch (userCreateErr) {
+        console.warn(
+          "[gis-service] Failed auto-creating DetailUsers:",
+          userCreateErr.message,
+        );
+      }
+    }
+
+    if (userRecord && userRecord.username) {
+      creatorUsername = userRecord.username;
+    }
+  }
 
   let lon = parseFloat(longitude);
   let lat = parseFloat(latitude);
@@ -77,64 +110,91 @@ const AddPlaceService = async (data) => {
     );
   }
 
-  let [insertedRows] = await sequelize.query(
-    `INSERT INTO tbl_geo_point_place (
-        uuid,
-        name_place,
-        description,
-        kode_provinsi,
-        nama_provinsi,
-        kode_kabupaten,
-        nama_kabupaten,
-        uuid_user,
-        geom,
-        "createdAt",
-        "updatedAt"
-     ) VALUES (
-        gen_random_uuid(),
-        :name_place,
-        :description,
-        :kode_provinsi,
-        :nama_provinsi,
-        :kode_kabupaten,
-        :nama_kabupaten,
-        :uuid_user,
-        ST_SetSRID(ST_MakePoint(:lon, :lat), 4326),
-        NOW(),
-        NOW()
-     )
-     RETURNING 
-        uuid,
-        name_place,
-        description,
-        kode_provinsi,
-        nama_provinsi,
-        kode_kabupaten,
-        nama_kabupaten,
-        uuid_user,
-        ST_AsGeoJSON(geom) AS geom,
-        "createdAt",
-        "updatedAt";`,
-    {
-      replacements: {
-        name_place,
-        description: description || null,
-        kode_provinsi,
-        nama_provinsi,
-        kode_kabupaten,
-        nama_kabupaten,
-        uuid_user: uuid_user || null,
-        lon,
-        lat,
-      },
-    },
-  );
+  const t = await sequelize.transaction();
+  let placeData;
 
-  let placeData = insertedRows[0];
-  if (placeData && typeof placeData.geom === "string") {
-    placeData.geom = JSON.parse(placeData.geom);
+  try {
+    let [insertedRows] = await sequelize.query(
+      `INSERT INTO tbl_geo_point_place (
+          uuid,
+          name_place,
+          description,
+          kode_provinsi,
+          nama_provinsi,
+          kode_kabupaten,
+          nama_kabupaten,
+          uuid_user,
+          geom,
+          "createdAt",
+          "updatedAt"
+       ) VALUES (
+          gen_random_uuid(),
+          :name_place,
+          :description,
+          :kode_provinsi,
+          :nama_provinsi,
+          :kode_kabupaten,
+          :nama_kabupaten,
+          :uuid_user,
+          ST_SetSRID(ST_MakePoint(:lon, :lat), 4326),
+          NOW(),
+          NOW()
+       )
+       RETURNING 
+          uuid,
+          name_place,
+          description,
+          kode_provinsi,
+          nama_provinsi,
+          kode_kabupaten,
+          nama_kabupaten,
+          uuid_user,
+          ST_AsGeoJSON(geom) AS geom,
+          "createdAt",
+          "updatedAt";`,
+      {
+        replacements: {
+          name_place,
+          description: description || null,
+          kode_provinsi,
+          nama_provinsi,
+          kode_kabupaten,
+          nama_kabupaten,
+          uuid_user: uuid_user || null,
+          lon,
+          lat,
+        },
+        transaction: t,
+      },
+    );
+
+    placeData = insertedRows[0];
+    if (placeData && typeof placeData.geom === "string") {
+      placeData.geom = JSON.parse(placeData.geom);
+    }
+
+    const dataDeliver = await deliverMessageData("point-places-queue", {
+      event_type: "NEW_PLACE_CREATED",
+      username: creatorUsername,
+      name_place: placeData.name_place,
+      kabupaten: placeData.nama_kabupaten,
+      provinsi: placeData.nama_provinsi,
+      is_read: "unread",
+    });
+
+    console.log("dataDeliver Service: ", dataDeliver);
+
+    await t.commit();
+  } catch (err) {
+    await t.rollback();
+    console.error(
+      "[AddPlaceService] Transaksi dibatalkan / rollback:",
+      err.message,
+    );
+    throw err;
   }
 
+  console.log("placeData Service: ", placeData);
   return placeData;
 };
 
