@@ -35,7 +35,8 @@ const CreatePlaceController = async (req, res, next) => {
 
     await deliverMessageData("point_places_queue", {
       event_type: "NEW_PLACE_CREATED",
-      username: placeData.creatorUsername || req.user.username || "user",
+      uuid_places: placeData.uuid,
+      username: req.user.username,
       name_place: placeData.name_place,
       kabupaten: placeData.nama_kabupaten,
       provinsi: placeData.nama_provinsi,

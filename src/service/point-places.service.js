@@ -22,36 +22,6 @@ const AddPlaceService = async (data) => {
     uuid_user,
   } = data;
 
-  let creatorUsername = data.username || "user";
-  if (uuid_user) {
-    let userRecord = await DetailUsers.findOne({
-      where: { uuid: uuid_user },
-      attributes: ["uuid", "username"],
-    });
-
-    if (!userRecord) {
-      try {
-        userRecord = await DetailUsers.create({
-          uuid: uuid_user,
-          username: data.username || "user",
-          email: data.email || `${uuid_user}@geosandbox.local`,
-        });
-        console.log(
-          `[gis-service] Auto-created missing DetailUsers for uuid: ${uuid_user}`,
-        );
-      } catch (userCreateErr) {
-        console.warn(
-          "[gis-service] Failed auto-creating DetailUsers:",
-          userCreateErr.message,
-        );
-      }
-    }
-
-    if (userRecord && userRecord.username) {
-      creatorUsername = userRecord.username;
-    }
-  }
-
   let lon = parseFloat(longitude);
   let lat = parseFloat(latitude);
 
@@ -165,11 +135,7 @@ const AddPlaceService = async (data) => {
     placeData.geom = JSON.parse(placeData.geom);
   }
 
-  console.log("placeData Service: ", placeData);
-  return {
-    ...placeData,
-    creatorUsername,
-  };
+  return placeData;
 };
 
 const UploadCSVFilePointService = async (
@@ -467,14 +433,7 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
 
   let where = cleanSearch
     ? {
-        [Op.or]: [
-          { name_place: { [Op.like]: `%${cleanSearch}%` } },
-          { description: { [Op.like]: `%${cleanSearch}%` } },
-          { kode_provinsi: { [Op.like]: `%${cleanSearch}%` } },
-          { nama_provinsi: { [Op.like]: `%${cleanSearch}%` } },
-          { kode_kabupaten: { [Op.like]: `%${cleanSearch}%` } },
-          { nama_kabupaten: { [Op.like]: `%${cleanSearch}%` } },
-        ],
+        [Op.or]: [{ name_place: { [Op.like]: `%${cleanSearch}%` } }],
       }
     : {};
 
