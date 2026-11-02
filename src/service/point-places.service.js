@@ -135,6 +135,19 @@ const AddPlaceService = async (data) => {
     placeData.geom = JSON.parse(placeData.geom);
   }
 
+  let creatorUsername = data.username || null;
+  if (!creatorUsername && uuid_user) {
+    try {
+      const user = await DetailUsers.findOne({ where: { uuid: uuid_user } });
+      if (user) {
+        creatorUsername = user.username;
+      }
+    } catch (err) {
+      console.error("[AddPlaceService] Error fetching DetailUsers:", err.message);
+    }
+  }
+  placeData.username = creatorUsername;
+
   return placeData;
 };
 

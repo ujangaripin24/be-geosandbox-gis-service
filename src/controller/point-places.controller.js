@@ -33,10 +33,13 @@ const CreatePlaceController = async (req, res, next) => {
       username: req.user.username,
     });
 
+    console.log("placeData: ", placeData.uuid_user);
+    console.log("placeData: ", placeData.username);
+
     await deliverMessageData("point_places_queue", {
       event_type: "NEW_PLACE_CREATED",
       uuid_places: placeData.uuid,
-      username: req.user.username,
+      username: placeData.username,
       name_place: placeData.name_place,
       kabupaten: placeData.nama_kabupaten,
       provinsi: placeData.nama_provinsi,
