@@ -3,7 +3,7 @@ const { sequelize, TblProjectGeo, TblFolderProject } = require("../models");
 const validateGeometryInsideKabupaten = async (
   geomObj,
   kode_provinsi,
-  kode_kabupaten
+  kode_kabupaten,
 ) => {
   const geomJson = JSON.stringify(geomObj);
 
@@ -19,12 +19,12 @@ const validateGeometryInsideKabupaten = async (
      LIMIT 1;`,
     {
       replacements: { geomJson, kode_kabupaten, kode_provinsi },
-    }
+    },
   );
 
   if (!rows || rows.length === 0) {
     throw new Error(
-      `Batas wilayah kabupaten dengan kode '${kode_kabupaten}' tidak ditemukan`
+      `Batas wilayah kabupaten dengan kode '${kode_kabupaten}' tidak ditemukan`,
     );
   }
 
@@ -33,7 +33,7 @@ const validateGeometryInsideKabupaten = async (
   if (!is_inside) {
     const geomType = geomObj.type || "Geometri";
     throw new Error(
-      `${geomType} berada di luar batas wilayah kabupaten '${nama_kabupaten}'`
+      `${geomType} berada di luar batas wilayah kabupaten '${nama_kabupaten}'`,
     );
   }
 
@@ -101,13 +101,15 @@ const CreateGeometryProjectService = async ({
 
     for (const item of itemsToProcess) {
       if (!item.geometry || !item.geometry.type || !item.geometry.coordinates) {
-        throw new Error("Struktur objek geometri tidak memiliki type/coordinates");
+        throw new Error(
+          "Struktur objek geometri tidak memiliki type/coordinates",
+        );
       }
 
       await validateGeometryInsideKabupaten(
         item.geometry,
         kode_provinsi,
-        kode_kabupaten
+        kode_kabupaten,
       );
 
       const geomJson = JSON.stringify(item.geometry);
@@ -142,7 +144,7 @@ const CreateGeometryProjectService = async ({
             geomJson,
           },
           transaction,
-        }
+        },
       );
 
       if (insertedRows && insertedRows[0]) {
@@ -199,7 +201,7 @@ const GetGeometriesByProjectService = async (uuid_project_geo, uuid_user) => {
      ORDER BY g."createdAt" ASC;`,
     {
       replacements: { uuid_project_geo },
-    }
+    },
   );
 
   const features = rows.map((row) => {
@@ -266,7 +268,7 @@ const GetDetailGeometryProjectService = async (uuid, uuid_user) => {
      LIMIT 1;`,
     {
       replacements: { uuid },
-    }
+    },
   );
 
   if (!rows || rows.length === 0) {
@@ -311,7 +313,7 @@ const GetDetailGeometryProjectService = async (uuid, uuid_user) => {
 const UpdateGeometryProjectService = async (
   uuid,
   { name, detail, geometry },
-  uuid_user
+  uuid_user,
 ) => {
   const [existingRows] = await sequelize.query(
     `SELECT g.uuid, g.uuid_user, g.uuid_project_geo, p.kode_provinsi, p.kode_kabupaten 
@@ -321,7 +323,7 @@ const UpdateGeometryProjectService = async (
      LIMIT 1;`,
     {
       replacements: { uuid },
-    }
+    },
   );
 
   if (!existingRows || existingRows.length === 0) {
@@ -345,7 +347,7 @@ const UpdateGeometryProjectService = async (
     await validateGeometryInsideKabupaten(
       geometry,
       existing.kode_provinsi,
-      existing.kode_kabupaten
+      existing.kode_kabupaten,
     );
     const geomJson = JSON.stringify(geometry);
     geomSqlClause = `, geom = ST_SetSRID(ST_GeomFromGeoJSON(:geomJson), 4326)`;
@@ -361,7 +363,7 @@ const UpdateGeometryProjectService = async (
      WHERE uuid = :uuid;`,
     {
       replacements,
-    }
+    },
   );
 
   return GetDetailGeometryProjectService(uuid, uuid_user);
@@ -372,7 +374,7 @@ const DeleteGeometryProjectService = async (uuid, uuid_user) => {
     `SELECT uuid, uuid_user FROM tbl_geometry_project WHERE uuid = :uuid LIMIT 1;`,
     {
       replacements: { uuid },
-    }
+    },
   );
 
   if (!existingRows || existingRows.length === 0) {
@@ -387,7 +389,7 @@ const DeleteGeometryProjectService = async (uuid, uuid_user) => {
     `DELETE FROM tbl_geometry_project WHERE uuid = :uuid;`,
     {
       replacements: { uuid },
-    }
+    },
   );
 
   return { uuid };
