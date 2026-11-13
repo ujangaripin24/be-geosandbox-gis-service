@@ -34,6 +34,19 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true
     },
+    role: {
+      type: DataTypes.ENUM("SUPERADMIN", "ADMIN", "USER", "GUEST"),
+      defaultValue: "GUEST",
+      allowNull: false,
+    },
+    uuid_company: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    event_type: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'DetailUsers',
