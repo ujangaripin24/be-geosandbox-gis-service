@@ -10,52 +10,90 @@ const { DetailUsers } = require("../../models");
 
 let consumerRegistered = false;
 
+const consumeUserActivatedQueue = async () => {
+  await reciverMessageData(["gis_user_activated"], async (msg) => {
+    if (!msg) return;
+
+    const payload = JSON.parse(msg.content.toString());
+    console.log(
+      "[gis-service] Received 'gis_user_activated' payload:",
+      payload,
+    );
+    const { uuid, username, email } = payload;
+
+    if (!uuid) {
+      console.warn(
+        "[gis-service] Missing uuid in message payload, skipping message",
+      );
+      return;
+    }
+
+    const existingUser = await DetailUsers.findOne({ where: { uuid } });
+    if (!existingUser) {
+      await DetailUsers.create({
+        uuid,
+        username: username || (email ? email.split("@")[0] : "unknown"),
+        email: email || "",
+      });
+      console.log(
+        `[gis-service] Successfully created DetailUsers for uuid: ${uuid}`,
+      );
+    } else {
+      console.warn(
+        `[gis-service] DetailUsers record for uuid ${uuid} already exists.`,
+      );
+    }
+  });
+};
+
 const consumeUserUpdatedQueue = async () => {
-  await reciverMessageData(
-    ["gis_user_activated", "gis_user_update"],
-    async (msg) => {
-      if (!msg) return;
+  await reciverMessageData(["gis_user_update"], async (msg) => {
+    if (!msg) return;
 
-      const payload = JSON.parse(msg.content.toString());
-      console.log("[gis-service] Received user event payload:", payload);
-      const { uuid, username, email } = payload;
+    const payload = JSON.parse(msg.content.toString());
+    console.log(
+      "[gis-service] Received 'gis_user_update' payload:",
+      payload,
+    );
+    const { uuid, username, email } = payload;
 
-      if (!uuid) {
-        console.warn("[gis-service] Missing uuid in message payload, skipping message");
-        return;
-      }
+    if (!uuid) {
+      console.warn(
+        "[gis-service] Missing uuid in message payload, skipping message",
+      );
+      return;
+    }
 
-      const user = await DetailUsers.findOne({ where: { uuid } });
-      if (user) {
-        const updateData = {};
-        if (username) updateData.username = username;
-        if (email) updateData.email = email;
-        if (Object.keys(updateData).length > 0) {
-          await user.update(updateData);
-          console.log(
-            `[gis-service] Successfully updated DetailUsers for uuid: ${uuid}`,
-            updateData,
-          );
-        }
-      } else {
-        console.warn(
-          `[gis-service] DetailUsers record for uuid ${uuid} not found. Auto-creating record.`,
-        );
-        await DetailUsers.create({
-          uuid,
-          username: username || (email ? email.split("@")[0] : "unknown"),
-          email: email || "",
-        });
+    const user = await DetailUsers.findOne({ where: { uuid } });
+    if (user) {
+      const updateData = {};
+      if (username) updateData.username = username;
+      if (email) updateData.email = email;
+      if (Object.keys(updateData).length > 0) {
+        await user.update(updateData);
         console.log(
-          `[gis-service] Successfully created DetailUsers for uuid: ${uuid}`,
+          `[gis-service] Successfully updated DetailUsers for uuid: ${uuid}`,
+          updateData,
         );
       }
-    },
-  );
+    } else {
+      console.warn(
+        `[gis-service] DetailUsers record for uuid ${uuid} not found. Auto-creating record.`,
+      );
+      await DetailUsers.create({
+        uuid,
+        username: username || (email ? email.split("@")[0] : "unknown"),
+        email: email || "",
+      });
+      console.log(
+        `[gis-service] Auto-created DetailUsers for uuid: ${uuid}`,
+      );
+    }
+  });
 };
 
 /**
- * Listens to the GIS-specific user update queue from RabbitMQ,
+ * Listens to 'gis_user_activated' and 'gis_user_update' queues from RabbitMQ,
  * synchronizes username/email in the GIS database, and auto-replays DLQ messages on startup.
  */
 const listenUserUpdatedQueue = async () => {
@@ -63,6 +101,7 @@ const listenUserUpdatedQueue = async () => {
   consumerRegistered = true;
 
   const startListener = async () => {
+    await consumeUserActivatedQueue();
     await consumeUserUpdatedQueue();
     setTimeout(async () => {
       try {
