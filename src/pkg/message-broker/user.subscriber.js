@@ -6,7 +6,7 @@ const {
   getChannel,
   onChannelReady,
 } = require("../../config/message-broker.config");
-const { DetailUsers } = require("../../models");
+const { DetailUsers, Sequelize } = require("../../models");
 
 let consumerRegistered = false;
 
@@ -30,9 +30,21 @@ const consumeUserActivatedQueue = async () => {
 
     const existingUser = await DetailUsers.findOne({ where: { uuid } });
     if (!existingUser) {
+      const targetUsername =
+        username || (email ? email.split("@")[0] : "unknown");
+      const duplicateUser = await DetailUsers.findOne({
+        where: Sequelize.or({ username: targetUsername }, { email: email || "" }),
+      });
+      if (duplicateUser) {
+        console.warn(
+          `[gis-service] Skipping 'gis_user_activated' for uuid ${uuid}: username '${targetUsername}' or email '${email}' already exists (uuid: ${duplicateUser.uuid}).`,
+        );
+        return;
+      }
+
       await DetailUsers.create({
         uuid,
-        username: username || (email ? email.split("@")[0] : "unknown"),
+        username: targetUsername,
         email: email || "",
       });
       console.log(
