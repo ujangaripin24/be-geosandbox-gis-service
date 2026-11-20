@@ -490,7 +490,6 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     );
   }
 
-  // 1. Coba pencarian melalui Elasticsearch terlebih dahulu
   try {
     const esResult = await searchPointPlacesES({
       page: currentPage,
@@ -552,7 +551,6 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     );
   }
 
-  // 2. Fallback ke PostgreSQL jika Elasticsearch mati atau index belum ter-seed
   let where = cleanSearch
     ? {
       [Op.or]: [
