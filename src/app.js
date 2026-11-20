@@ -24,8 +24,14 @@ const rustfsClient = require("./config/storage-s3.config");
 const { version } = require("../package.json");
 const { listenCompanyUpdateQueue } = require("./pkg/message-broker/company.subscriber");
 const {
-  initElasticsearchAndSeed,
-} = require("./pkg/elasticsearch/wilayah-search.pkg");
+  initProvinsiIndexAndSeed,
+} = require("./pkg/elasticsearch/provinsi-search.pkg");
+const {
+  initKabupatenIndexAndSeed,
+} = require("./pkg/elasticsearch/kabupaten-search.pkg");
+const {
+  initPointPlacesIndexAndSeed,
+} = require("./pkg/elasticsearch/point-search.pkg");
 
 dotenv.config();
 
@@ -66,7 +72,11 @@ app.listen(process.env.APP_PORT, async () => {
     await rustfsClient.connectionStorageS3();
     await listenUserUpdatedQueue();
     await listenCompanyUpdateQueue();
-    initElasticsearchAndSeed().catch((esErr) => {
+    Promise.all([
+      initProvinsiIndexAndSeed(),
+      initKabupatenIndexAndSeed(),
+      initPointPlacesIndexAndSeed(),
+    ]).catch((esErr) => {
       console.warn(
         "[Elasticsearch] Gagal melakukan startup seeding:",
         esErr.message,

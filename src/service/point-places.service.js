@@ -12,7 +12,7 @@ const {
   syncPointPlaceToES,
   bulkSyncPointPlacesToES,
   searchPointPlacesES,
-} = require("../pkg/elasticsearch/wilayah-search.pkg");
+} = require("../pkg/elasticsearch/point-search.pkg");
 const { invalidatePointPlacesCache } = require("../pkg/elasticsearch/invalidate-point.pkg");
 
 const osrmBaseUrl = process.env.OSRM_URL_API;
@@ -533,6 +533,7 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
         page: currentPage,
         totalPages,
         totalData: esResult.totalData,
+        suggestion: esResult.suggestion || null,
       };
 
       try {
@@ -624,6 +625,7 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     page: currentPage,
     totalPages,
     totalData: count,
+    suggestion: null,
   };
 
   try {

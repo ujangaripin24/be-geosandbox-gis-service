@@ -7,7 +7,7 @@ const {
 const {
   syncKabupatenToES,
   searchKabupatenES,
-} = require("../pkg/elasticsearch/wilayah-search.pkg");
+} = require("../pkg/elasticsearch/kabupaten-search.pkg");
 
 const importKabupaten = async (document, { replace = false } = {}) => {
   const rows = validateFeatureCollection(document);
@@ -93,6 +93,7 @@ const getAllKabupaten = async ({ page = 1, size = 10, search = "" }) => {
         page: currentPage,
         totalPages,
         totalData: esResult.totalData,
+        suggestion: esResult.suggestion || null,
       };
     }
 
@@ -106,6 +107,7 @@ const getAllKabupaten = async ({ page = 1, size = 10, search = "" }) => {
           page: currentPage,
           totalPages: 0,
           totalData: 0,
+          suggestion: esResult.suggestion || null,
         };
       }
     }
@@ -163,6 +165,7 @@ const getAllKabupaten = async ({ page = 1, size = 10, search = "" }) => {
     page: currentPage,
     totalPages,
     totalData: count,
+    suggestion: null,
   };
 };
 

@@ -7,7 +7,7 @@ const {
 const {
   syncProvinsiToES,
   searchProvinsiES,
-} = require("../pkg/elasticsearch/wilayah-search.pkg");
+} = require("../pkg/elasticsearch/provinsi-search.pkg");
 
 const importProvinsi = async (document, { replace = false } = {}) => {
   const rows = validateFeatureCollection(document);
@@ -88,6 +88,7 @@ const getAllProvinsi = async ({ page = 1, size = 10, search = "" }) => {
         page: currentPage,
         totalPages,
         totalData: esResult.totalData,
+        suggestion: esResult.suggestion || null,
       };
     }
 
@@ -102,6 +103,7 @@ const getAllProvinsi = async ({ page = 1, size = 10, search = "" }) => {
           page: currentPage,
           totalPages: 0,
           totalData: 0,
+          suggestion: esResult.suggestion || null,
         };
       }
     }
@@ -146,6 +148,7 @@ const getAllProvinsi = async ({ page = 1, size = 10, search = "" }) => {
     page: currentPage,
     totalPages,
     totalData: count,
+    suggestion: null,
   };
 };
 
@@ -172,6 +175,7 @@ const getProvinsiByName = async ({ page = 1, size = 10, search = "" }) => {
         return {
           count: esResult.totalData,
           rows: esResult.items,
+          suggestion: esResult.suggestion || null,
         };
       }
     }
