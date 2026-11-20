@@ -8,6 +8,12 @@ const {
 } = require("../validation/point-places.validation");
 dotenv.config();
 const RedisClient = require("../config/data-cache.config");
+const {
+  syncPointPlaceToES,
+  bulkSyncPointPlacesToES,
+  searchPointPlacesES,
+} = require("../pkg/elasticsearch/wilayah-search.pkg");
+const { invalidatePointPlacesCache } = require("../pkg/elasticsearch/invalidate-point.pkg");
 
 const osrmBaseUrl = process.env.OSRM_URL_API;
 const nominatimBaseUrl = process.env.NOMINATIM_URL_API;
@@ -147,6 +153,23 @@ const AddPlaceService = async (data) => {
     }
   }
   placeData.username = creatorUsername;
+
+  syncPointPlaceToES({
+    ...placeData,
+    user: uuid_user
+      ? {
+        uuid: uuid_user,
+        username: creatorUsername,
+        email: data.email || null,
+      }
+      : null,
+  }).catch((esErr) => {
+    console.warn(
+      "[Elasticsearch Sync Warning] Gagal menyinkronkan point place baru ke ES:",
+      esErr.message,
+    );
+  });
+  invalidatePointPlacesCache();
 
   return placeData;
 };
@@ -421,15 +444,38 @@ const UploadCSVFilePointService = async (
     }
   }
 
+  if (results.inserted_places.length > 0) {
+    const insertedUuids = results.inserted_places.map((p) => p.uuid);
+    TblPointPlace.findAll({
+      where: { uuid: { [Op.in]: insertedUuids } },
+      include: [
+        {
+          model: DetailUsers,
+          as: "user",
+          attributes: ["uuid", "email", "username"],
+        },
+      ],
+    })
+      .then((rows) => bulkSyncPointPlacesToES(rows))
+      .catch((esErr) => {
+        console.warn(
+          "[Elasticsearch Sync Warning] Gagal menyinkronkan CSV point places ke ES:",
+          esErr.message,
+        );
+      });
+    invalidatePointPlacesCache();
+  }
+
   return results;
 };
 
 const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
-  let limit = parseInt(size);
-  let offset = (page - 1) * limit;
-  let cleanSearch = String(search).trim().toLowerCase();
+  let limit = parseInt(size) || 10;
+  let currentPage = parseInt(page) || 1;
+  let offset = (currentPage - 1) * limit;
+  let cleanSearch = String(search || "").trim().toLowerCase();
 
-  let redisKey = `cache:point-places:page:${page}:size:${size}:search:${cleanSearch}`;
+  let redisKey = `cache:point-places:page:${currentPage}:size:${limit}:search:${cleanSearch}`;
 
   try {
     const cachedData = await RedisClient.get(redisKey);
@@ -439,15 +485,82 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     }
   } catch (cacheErr) {
     console.warn(
-      "[Redis Warning] Gagal membaca cache, fallback ke DB:",
+      "[Redis Warning] Gagal membaca cache, lanjut ke Elasticsearch/DB:",
       cacheErr.message,
     );
   }
 
+  // 1. Coba pencarian melalui Elasticsearch terlebih dahulu
+  try {
+    const esResult = await searchPointPlacesES({
+      page: currentPage,
+      size: limit,
+      search: cleanSearch,
+    });
+
+    let shouldUseEsResult = esResult.items.length > 0;
+    if (!shouldUseEsResult && cleanSearch && esResult.totalData === 0) {
+      const checkIndex = await searchPointPlacesES({
+        page: 1,
+        size: 1,
+        search: "",
+      });
+      if (checkIndex.totalData > 0) {
+        shouldUseEsResult = true;
+      }
+    }
+
+    if (shouldUseEsResult) {
+      const esRows = esResult.items.map((doc) => ({
+        uuid: doc.uuid,
+        name_place: doc.name_place,
+        description: doc.description,
+        kode_provinsi: doc.kode_provinsi,
+        nama_provinsi: doc.nama_provinsi,
+        kode_kabupaten: doc.kode_kabupaten,
+        nama_kabupaten: doc.nama_kabupaten,
+        geom: doc.geom,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+        user: doc.user || null,
+      }));
+
+      let totalPages = Math.ceil(esResult.totalData / limit);
+      let result = {
+        type: "FeatureCollection",
+        features: esRows.map(toGeoJSONFeature),
+        size: limit,
+        page: currentPage,
+        totalPages,
+        totalData: esResult.totalData,
+      };
+
+      try {
+        await RedisClient.set(redisKey, JSON.stringify(result), { EX: 300 });
+        console.log("[Cache Set] Menyimpan data ES ke Redis (TTL 5m):", redisKey);
+      } catch (cacheErr) {
+        console.warn("[Redis Warning] Gagal menyimpan cache:", cacheErr.message);
+      }
+
+      return result;
+    }
+  } catch (esError) {
+    console.warn(
+      "[Elasticsearch Fallback] GetAllPlaceService beralih ke PostgreSQL:",
+      esError.message,
+    );
+  }
+
+  // 2. Fallback ke PostgreSQL jika Elasticsearch mati atau index belum ter-seed
   let where = cleanSearch
     ? {
-        [Op.or]: [{ name_place: { [Op.like]: `%${cleanSearch}%` } }],
-      }
+      [Op.or]: [
+        { name_place: { [Op.iLike]: `%${cleanSearch}%` } },
+        { description: { [Op.iLike]: `%${cleanSearch}%` } },
+        { nama_kabupaten: { [Op.iLike]: `%${cleanSearch}%` } },
+        { nama_provinsi: { [Op.iLike]: `%${cleanSearch}%` } },
+      ],
+    }
     : {};
 
   let { rows, count } = await TblPointPlace.findAndCountAll({
@@ -466,6 +579,7 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     where,
     limit,
     offset,
+    order: [["createdAt", "DESC"]],
     include: [
       {
         model: DetailUsers,
@@ -475,12 +589,39 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
     ],
   });
 
+  if (!cleanSearch && rows.length > 0) {
+    TblPointPlace.findAll({
+      attributes: [
+        "uuid",
+        "name_place",
+        "description",
+        "kode_provinsi",
+        "nama_provinsi",
+        "kode_kabupaten",
+        "nama_kabupaten",
+        "uuid_user",
+        "geom",
+        "createdAt",
+        "updatedAt",
+      ],
+      include: [
+        {
+          model: DetailUsers,
+          as: "user",
+          attributes: ["uuid", "email", "username"],
+        },
+      ],
+    })
+      .then((allRows) => bulkSyncPointPlacesToES(allRows))
+      .catch(() => { });
+  }
+
   let totalPages = Math.ceil(count / limit);
   let result = {
     type: "FeatureCollection",
     features: rows.map(toGeoJSONFeature),
     size: limit,
-    page: parseInt(page),
+    page: currentPage,
     totalPages,
     totalData: count,
   };
@@ -496,10 +637,17 @@ const GetAllPlaceService = async ({ page = 1, size = 10, search = "" }) => {
 };
 
 const UpdatePlaceService = async (uuid, body) => {
-  let data = await TblPointPlace.findOne({
+  let place = await TblPointPlace.findOne({
     where: { uuid },
+    include: [
+      {
+        model: DetailUsers,
+        as: "user",
+        attributes: ["uuid", "email", "username"],
+      },
+    ],
   });
-  if (!data) {
+  if (!place) {
     throw new Error("Place Not Found");
   }
 
@@ -586,7 +734,23 @@ const UpdatePlaceService = async (uuid, body) => {
     );
   }
   await place.save();
-  await place.reload();
+  await place.reload({
+    include: [
+      {
+        model: DetailUsers,
+        as: "user",
+        attributes: ["uuid", "email", "username"],
+      },
+    ],
+  });
+
+  syncPointPlaceToES(place).catch((esErr) => {
+    console.warn(
+      "[Elasticsearch Sync Warning] Gagal menyinkronkan update point place ke ES:",
+      esErr.message,
+    );
+  });
+  invalidatePointPlacesCache();
 
   return place;
 };

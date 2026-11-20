@@ -23,6 +23,9 @@ const multiGeomRouter = require("./routes/multi-geom.routes");
 const rustfsClient = require("./config/storage-s3.config");
 const { version } = require("../package.json");
 const { listenCompanyUpdateQueue } = require("./pkg/message-broker/company.subscriber");
+const {
+  initElasticsearchAndSeed,
+} = require("./pkg/elasticsearch/wilayah-search.pkg");
 
 dotenv.config();
 
@@ -63,6 +66,12 @@ app.listen(process.env.APP_PORT, async () => {
     await rustfsClient.connectionStorageS3();
     await listenUserUpdatedQueue();
     await listenCompanyUpdateQueue();
+    initElasticsearchAndSeed().catch((esErr) => {
+      console.warn(
+        "[Elasticsearch] Gagal melakukan startup seeding:",
+        esErr.message,
+      );
+    });
   } catch (error) {
     console.error("Unable to start server:");
     console.error(error.message);
